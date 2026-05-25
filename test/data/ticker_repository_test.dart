@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:http/http.dart' as http;
 import 'package:stock_screener/data/ticker_repository.dart';
 import 'package:stock_screener/domain/ohlcv_data.dart';
 
 class MockTickerRepository extends Mock implements TickerRepository {}
+class MockClient extends Mock implements http.Client {}
 
 void main() {
   late MockTickerRepository mockRepo;
@@ -213,9 +216,11 @@ void main() {
 
   group('YahooFinanceTickerRepository', () {
     late YahooFinanceTickerRepository repo;
+    late MockClient mockClient;
 
     setUp(() {
-      repo = YahooFinanceTickerRepository();
+      mockClient = MockClient();
+      repo = YahooFinanceTickerRepository(client: mockClient);
     });
 
     test('can be instantiated with defaults', () {
@@ -235,17 +240,108 @@ void main() {
       expect(custom.throttleMs, 1000);
     });
 
-    group('throws UnimplementedError for all methods', () {
-      test('fetchUniverse', () async {
+    group('fetchOhlcv', () {
+      setUp(() {
+        registerFallbackValue(Uri.parse('http://localhost'));
+        repo = YahooFinanceTickerRepository(client: mockClient, throttleMs: 0);
+      });
+
+      test('returns OhlcvData on successful response', () async {
+        final mockResponse = {
+          'chart': {
+            'result': [
+              {
+                'timestamp': [1000, 2000],
+                'indicators': {
+                  'quote': [
+                    {
+                      'open': [10.0, 11.0],
+                      'high': [12.0, 13.0],
+                      'low': [9.0, 10.0],
+                      'close': [11.0, 12.0],
+                      'volume': [100, 200],
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        };
+
+        when(() => mockClient.get(any())).thenAnswer(
+          (_) async => http.Response(jsonEncode(mockResponse), 200),
+        );
+
+        final result = await repo.fetchOhlcv('AAPL');
+
+        expect(result, isNotNull);
+        expect(result!.open, [10.0, 11.0]);
+        expect(result.high, [12.0, 13.0]);
+        expect(result.low, [9.0, 10.0]);
+        expect(result.close, [11.0, 12.0]);
+        expect(result.volume, [100, 200]);
+
+        final captured = verify(() => mockClient.get(captureAny())).captured;
         expect(
-          () => repo.fetchUniverse(),
-          throwsA(isA<UnimplementedError>()),
+          (captured.first as Uri).toString(),
+          'https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1d&range=1y',
         );
       });
 
-      test('fetchOhlcv', () async {
+      test('filters out rows with null values', () async {
+        final mockResponse = {
+          'chart': {
+            'result': [
+              {
+                'timestamp': [1000, 2000, 3000],
+                'indicators': {
+                  'quote': [
+                    {
+                      'open': [10.0, null, 12.0],
+                      'high': [12.0, 13.0, 14.0],
+                      'low': [9.0, 10.0, 11.0],
+                      'close': [11.0, 12.0, 13.0],
+                      'volume': [100, 200, 300],
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        };
+
+        when(() => mockClient.get(any())).thenAnswer(
+          (_) async => http.Response(jsonEncode(mockResponse), 200),
+        );
+
+        final result = await repo.fetchOhlcv('AAPL');
+
+        expect(result, isNotNull);
+        expect(result!.open, [10.0, 12.0]); // middle row filtered out
+        expect(result.volume, [100, 300]);
+      });
+
+      test('returns null on non-200 status code', () async {
+        when(() => mockClient.get(any())).thenAnswer(
+          (_) async => http.Response('Error', 404),
+        );
+        final result = await repo.fetchOhlcv('AAPL');
+        expect(result, isNull);
+      });
+      
+      test('returns null on missing chart result', () async {
+        when(() => mockClient.get(any())).thenAnswer(
+          (_) async => http.Response(jsonEncode({'chart': null}), 200),
+        );
+        final result = await repo.fetchOhlcv('AAPL');
+        expect(result, isNull);
+      });
+    });
+
+    group('throws UnimplementedError for other methods', () {
+      test('fetchUniverse', () async {
         expect(
-          () => repo.fetchOhlcv('AAPL'),
+          () => repo.fetchUniverse(),
           throwsA(isA<UnimplementedError>()),
         );
       });

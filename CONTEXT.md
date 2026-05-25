@@ -34,7 +34,7 @@ The Pine Script file `diy_custom_strategy.pine` is the canonical reference for a
 
 ## Architecture pattern
 
-BLoC (Business Logic Component) for state management. UI never talks to repositories directly. Core services: Indicator Engine (pure Dart), Yahoo Finance HTTP Client, Scheduler Service (workmanager), Local DB (Hive).
+BLoC (Business Logic Component) for state management. UI never talks to repositories directly, but reactively listens to data changes via Hive streams. Core services: ScreenerService (headless orchestration), Indicator Engine (pure Dart), Yahoo Finance HTTP Client, Scheduler Service (workmanager), Local DB (Hive).
 
 ## Data flow
 
