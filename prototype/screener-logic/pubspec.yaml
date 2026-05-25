@@ -1,0 +1,9 @@
+name: screener_prototype
+description: Dart CLI prototype of the IDX Stock Screener indicator engine
+version: 0.1.0
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  # No external deps — pure Dart logic prototype
