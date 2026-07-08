@@ -6,7 +6,7 @@ Cross-platform Flutter mobile app (Android & iOS) for screening Indonesian Stock
 
 ## Target user
 
-Solo swing trader who configures screening parameters through a rich UI, schedules automated scans during IDX market hours, and receives local push notifications on fresh confluence signals.
+Solo swing trader who configures screening parameters through a rich UI, explicitly enables automated background scans (which silently abort outside of IDX market hours), and receives local push notifications on fresh confluence signals.
 
 ## Source of Truth
 
@@ -28,7 +28,9 @@ The Pine Script file `diy_custom_strategy.pine` is the canonical reference for a
 | Half Trend | Trend-following indicator — amplitude (2), channelDeviation (2) |
 | Leading Indicator | Primary indicator driving the signal direction |
 | Confirmation Indicator | Secondary indicators using AND-gate confluence with the leading indicator |
-| Fresh Signal | First reversal signal after an opposing direction period; deduplicated to notify only once |
+| Config Schema | Strongly typed Dart classes (`ConfigParam`) defining metadata (min/max/type) for indicator parameters to drive dynamic UI |
+| Config Repository | Abstraction layer over SharedPreferences that manages saving and loading nested indicator configurations for both UI and background headless scanning |
+| Fresh Signal | First reversal signal after an opposing direction period. In background tasks, results are filtered by this criteria first, and then deduplicated per ticker+signal per day to avoid spam. |
 | Confluence | ALL enabled confirmation indicators must agree with the leading indicator direction |
 | Signal types | BUY (long), SELL (short), NEUTRAL |
 
@@ -51,7 +53,7 @@ BLoC (Business Logic Component) for state management. UI never talks to reposito
 | ---- | -------- | ------- |
 | OHLCV daily | 24h | Hive |
 | OHLCV hourly | 2h | Hive |
-| Ticker universe | 7d | Hive |
+| Ticker universe | 7d (Fallback to stale on network failure) | Hive |
 | Screen results | Until next successful scan | Hive |
 | Indicator configs | Permanent | SharedPreferences |
 
