@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'math_utils.dart';
-import 'models.dart';
 
 // ═══════════════════════════════════════════════════════════════════
 // RANGE FILTER (Pine: lines 966-1094)
@@ -56,16 +55,18 @@ RangeFilterResult calcRangeFilter(
   final uprf = List<bool>.filled(n, false);
   final downrf = List<bool>.filled(n, false);
   for (int i = 1; i < n; i++) {
-    uprf[i] =
-        (src[i] > filt[i] && src[i] > src[i - 1] && upward[i] > 0) ||
+    uprf[i] = (src[i] > filt[i] && src[i] > src[i - 1] && upward[i] > 0) ||
         (src[i] > filt[i] && src[i] < src[i - 1] && upward[i] > 0);
-    downrf[i] =
-        (src[i] < filt[i] && src[i] < src[i - 1] && downward[i] > 0) ||
+    downrf[i] = (src[i] < filt[i] && src[i] < src[i - 1] && downward[i] > 0) ||
         (src[i] < filt[i] && src[i] > src[i - 1] && downward[i] > 0);
   }
 
   return RangeFilterResult(
-      filt: filt, upward: upward, downward: downward, uprf: uprf, downrf: downrf);
+      filt: filt,
+      upward: upward,
+      downward: downward,
+      uprf: uprf,
+      downrf: downrf);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -87,8 +88,7 @@ class RQKResult {
   });
 }
 
-RQKResult calcRQK(
-    List<double> src, double h2, double r, int x0, int lagVal) {
+RQKResult calcRQK(List<double> src, double h2, double r, int x0, int lagVal) {
   final n = src.length;
   final yhat1 = List<double>.filled(n, double.nan);
   final yhat2 = List<double>.filled(n, double.nan);
@@ -164,7 +164,9 @@ HalfTrendResult calcHalfTrend(
     final r = List<double>.filled(n, h[0]);
     for (int i = amp - 1; i < n; i++) {
       double mx = h[i];
-      for (int j = 0; j < amp; j++) mx = math.max(mx, h[i - j]);
+      for (int j = 0; j < amp; j++) {
+        mx = math.max(mx, h[i - j]);
+      }
       r[i] = mx;
     }
     return r;
@@ -174,7 +176,9 @@ HalfTrendResult calcHalfTrend(
     final r = List<double>.filled(n, l[0]);
     for (int i = amp - 1; i < n; i++) {
       double mn = l[i];
-      for (int j = 0; j < amp; j++) mn = math.min(mn, l[i - j]);
+      for (int j = 0; j < amp; j++) {
+        mn = math.min(mn, l[i - j]);
+      }
       r[i] = mn;
     }
     return r;
@@ -253,8 +257,9 @@ class SuperTrendResult {
   });
 }
 
-SuperTrendResult calcSuperTrend(List<double> high, List<double> low,
-    List<double> close, {int period = 10, double multiplier = 3.0}) {
+SuperTrendResult calcSuperTrend(
+    List<double> high, List<double> low, List<double> close,
+    {int period = 10, double multiplier = 3.0}) {
   final n = close.length;
   final hl2 = List.generate(n, (i) => (high[i] + low[i]) / 2);
   final atrVals = atr(high, low, close, period);
@@ -374,8 +379,9 @@ class DonchianResult {
       {required this.trend, required this.isLong, required this.isShort});
 }
 
-DonchianResult calcDonchian(List<double> high, List<double> low,
-    List<double> close, {int period = 15}) {
+DonchianResult calcDonchian(
+    List<double> high, List<double> low, List<double> close,
+    {int period = 15}) {
   final n = close.length;
   final hh = highest(high, period);
   final ll = lowest(low, period);
@@ -432,8 +438,9 @@ class IchimokuResult {
   const IchimokuResult({required this.isLong, required this.isShort});
 }
 
-IchimokuResult calcIchimoku(List<double> high, List<double> low,
-    List<double> close, {int conversion = 9, int base = 26, int spanB = 52, int displace = 26}) {
+IchimokuResult calcIchimoku(
+    List<double> high, List<double> low, List<double> close,
+    {int conversion = 9, int base = 26, int spanB = 52, int displace = 26}) {
   final n = close.length;
   final conv = List<double>.filled(n, 0);
   final baseL = List<double>.filled(n, 0);
@@ -454,10 +461,18 @@ IchimokuResult calcIchimoku(List<double> high, List<double> low,
     final l1 = i - d >= 0 ? lead1[i - d] : lead1[0];
     final l2 = i - d >= 0 ? lead2[i - d] : lead2[0];
     final chunk = i - 50 >= 0 ? close[i - 50] : close[0];
-    isLong[i] = conv[i] > baseL[i] && lead1[i] > lead2[i] &&
-        close[i] > l1 && close[i] > l2 && chunk > lead1[i - 50 >= 0 ? i - 50 : 0] && chunk > lead2[i - 50 >= 0 ? i - 50 : 0];
-    isShort[i] = conv[i] < baseL[i] && lead1[i] < lead2[i] &&
-        close[i] < l1 && close[i] < l2 && chunk < lead2[i - 50 >= 0 ? i - 50 : 0] && chunk < lead1[i - 50 >= 0 ? i - 50 : 0];
+    isLong[i] = conv[i] > baseL[i] &&
+        lead1[i] > lead2[i] &&
+        close[i] > l1 &&
+        close[i] > l2 &&
+        chunk > lead1[i - 50 >= 0 ? i - 50 : 0] &&
+        chunk > lead2[i - 50 >= 0 ? i - 50 : 0];
+    isShort[i] = conv[i] < baseL[i] &&
+        lead1[i] < lead2[i] &&
+        close[i] < l1 &&
+        close[i] < l2 &&
+        chunk < lead2[i - 50 >= 0 ? i - 50 : 0] &&
+        chunk < lead1[i - 50 >= 0 ? i - 50 : 0];
   }
   return IchimokuResult(isLong: isLong, isShort: isShort);
 }
@@ -472,10 +487,15 @@ class SuperIchiResult {
   const SuperIchiResult({required this.isLong, required this.isShort});
 }
 
-SuperIchiResult calcSuperIchi(List<double> high, List<double> low,
-    List<double> close, {int tenkanLen = 9, double tenkanMult = 2,
-    int kijunLen = 26, double kijunMult = 4, int spanBLen = 52,
-    double spanBMult = 6, int displace = 26}) {
+SuperIchiResult calcSuperIchi(
+    List<double> high, List<double> low, List<double> close,
+    {int tenkanLen = 9,
+    double tenkanMult = 2,
+    int kijunLen = 26,
+    double kijunMult = 4,
+    int spanBLen = 52,
+    double spanBMult = 6,
+    int displace = 26}) {
   final n = close.length;
   final atrV = atr(high, low, close, kijunLen);
 
@@ -503,10 +523,18 @@ SuperIchiResult calcSuperIchi(List<double> high, List<double> low,
     final c50 = i - 50 >= 0 ? close[i - 50] : close[0];
     final sA50 = i - 50 >= 0 ? sA[i - 50] : sA[0];
     final sB50 = i - 50 >= 0 ? sB[i - 50] : sB[0];
-    isLong[i] = tenkan[i] > kijun[i] && sA[i] > sB[i] &&
-        close[i] > sA1 && close[i] > sB1 && c50 > sA50 && c50 > sB50;
-    isShort[i] = tenkan[i] < kijun[i] && sA[i] < sB[i] &&
-        close[i] < sA1 && close[i] < sB1 && c50 < sB50 && c50 < sA50;
+    isLong[i] = tenkan[i] > kijun[i] &&
+        sA[i] > sB[i] &&
+        close[i] > sA1 &&
+        close[i] > sB1 &&
+        c50 > sA50 &&
+        c50 > sB50;
+    isShort[i] = tenkan[i] < kijun[i] &&
+        sA[i] < sB[i] &&
+        close[i] < sA1 &&
+        close[i] < sB1 &&
+        c50 < sB50 &&
+        c50 < sA50;
   }
   return SuperIchiResult(isLong: isLong, isShort: isShort);
 }
@@ -520,12 +548,20 @@ class StochResult {
   final List<bool> isLong, isShort;
 
   const StochResult(
-      {required this.k, required this.d, required this.isLong, required this.isShort});
+      {required this.k,
+      required this.d,
+      required this.isLong,
+      required this.isShort});
 }
 
-StochResult calcStochastic(List<double> high, List<double> low,
-    List<double> close, {int length = 14, int smoothK = 3, int smoothD = 3,
-    int ob = 80, int os = 20, String type = 'CrossOver'}) {
+StochResult calcStochastic(
+    List<double> high, List<double> low, List<double> close,
+    {int length = 14,
+    int smoothK = 3,
+    int smoothD = 3,
+    int ob = 80,
+    int os = 20,
+    String type = 'CrossOver'}) {
   final n = close.length;
   final rawK = List<double>.filled(n, 50);
   for (int i = length - 1; i < n; i++) {
@@ -543,8 +579,10 @@ StochResult calcStochastic(List<double> high, List<double> low,
       isLong[i] = k[i - 1] < d[i - 1] && k[i] > d[i];
       isShort[i] = k[i - 1] > d[i - 1] && k[i] < d[i];
     } else if (type == 'CrossOver in OB & OS levels') {
-      isLong[i] = k[i - 1] < d[i - 1] && k[i - 1] < os && k[i] > d[i] && k[i] > os;
-      isShort[i] = k[i - 1] > d[i - 1] && k[i - 1] > ob && k[i] < d[i] && k[i] < ob;
+      isLong[i] =
+          k[i - 1] < d[i - 1] && k[i - 1] < os && k[i] > d[i] && k[i] > os;
+      isShort[i] =
+          k[i - 1] > d[i - 1] && k[i - 1] > ob && k[i] < d[i] && k[i] < ob;
     } else {
       isLong[i] = k[i] > d[i];
       isShort[i] = k[i] < d[i];
@@ -577,17 +615,31 @@ class RSIResult {
 }
 
 RSIResult calcRSI(List<double> close,
-    {int length = 14, String maType = 'SMA', int maLen = 14,
-    int ob = 80, int os = 20, int level = 50,
+    {int length = 14,
+    String maType = 'SMA',
+    int maLen = 14,
+    int ob = 80,
+    int os = 20,
+    int level = 50,
     String rsiType = 'RSI MA Cross',
-    int limitUp = 40, int limitDown = 60,
-    int maLimitUp = 40, int maLimitDown = 60}) {
+    int limitUp = 40,
+    int limitDown = 60,
+    int maLimitUp = 40,
+    int maLimitDown = 60}) {
   final n = close.length;
-  final up = rma(List.generate(n, (i) => i > 0 ? math.max(close[i] - close[i - 1], 0) : 0), length);
-  final down = rma(List.generate(n, (i) => i > 0 ? math.max(close[i - 1] - close[i], 0) : 0), length);
+  final up = rma(
+      List.generate(n, (i) => i > 0 ? math.max(close[i] - close[i - 1], 0) : 0),
+      length);
+  final down = rma(
+      List.generate(n, (i) => i > 0 ? math.max(close[i - 1] - close[i], 0) : 0),
+      length);
   final rsi = List<double>.filled(n, 50);
   for (int i = 0; i < n; i++) {
-    rsi[i] = down[i] == 0 ? 100 : up[i] == 0 ? 0 : 100 - 100 / (1 + up[i] / down[i]);
+    rsi[i] = down[i] == 0
+        ? 100
+        : up[i] == 0
+            ? 0
+            : 100 - 100 / (1 + up[i] / down[i]);
   }
   final rsiMA = movingAverage(rsi, maLen, maType);
 
@@ -607,16 +659,24 @@ RSIResult calcRSI(List<double> close,
   }
 
   final maUp = List.generate(n, (i) => i > 0 ? rsiMA[i] >= rsiMA[i - 1] : true);
-  final maDown = List.generate(n, (i) => i > 0 ? rsiMA[i] <= rsiMA[i - 1] : true);
+  final maDown =
+      List.generate(n, (i) => i > 0 ? rsiMA[i] <= rsiMA[i - 1] : true);
   final maLimitLong = rsiMA.map((v) => v >= maLimitUp).toList();
   final maLimitShort = rsiMA.map((v) => v <= maLimitDown).toList();
   final limitLong = rsi.map((v) => v >= limitUp).toList();
   final limitShort = rsi.map((v) => v <= limitDown).toList();
 
   return RSIResult(
-    rsi: rsi, rsiMA: rsiMA, isLong: isLong, isShort: isShort,
-    maUp: maUp, maDown: maDown, maLimitLong: maLimitLong,
-    maLimitShort: maLimitShort, limitLong: limitLong, limitShort: limitShort,
+    rsi: rsi,
+    rsiMA: rsiMA,
+    isLong: isLong,
+    isShort: isShort,
+    maUp: maUp,
+    maDown: maDown,
+    maLimitLong: maLimitLong,
+    maLimitShort: maLimitShort,
+    limitLong: limitLong,
+    limitShort: limitShort,
   );
 }
 
@@ -629,13 +689,18 @@ class MACDResult {
   final List<bool> isLong, isShort;
 
   const MACDResult({
-    required this.macd, required this.signal, required this.hist,
-    required this.isLong, required this.isShort,
+    required this.macd,
+    required this.signal,
+    required this.hist,
+    required this.isLong,
+    required this.isShort,
   });
 }
 
 MACDResult calcMACD(List<double> close,
-    {int fast = 12, int slow = 26, int signalLen = 9,
+    {int fast = 12,
+    int slow = 26,
+    int signalLen = 9,
     String macdType = 'MACD Crossover'}) {
   final fastMA = ema(close, fast);
   final slowMA = ema(close, slow);
@@ -653,9 +718,11 @@ MACDResult calcMACD(List<double> close,
     }
   }
   return MACDResult(
-    macd: macd, signal: sig,
+    macd: macd,
+    signal: sig,
     hist: List.generate(close.length, (i) => macd[i] - sig[i]),
-    isLong: isLong, isShort: isShort,
+    isLong: isLong,
+    isShort: isShort,
   );
 }
 
@@ -677,7 +744,11 @@ SSLResult calcSSL(List<double> high, List<double> low, List<double> close,
   final isShort = List<bool>.filled(close.length, false);
   int hlv = 0;
   for (int i = 0; i < close.length; i++) {
-    hlv = close[i] > smaH[i] ? 1 : close[i] < smaL[i] ? -1 : hlv;
+    hlv = close[i] > smaH[i]
+        ? 1
+        : close[i] < smaL[i]
+            ? -1
+            : hlv;
     final sslDown = hlv < 0 ? smaH[i] : smaL[i];
     final sslUp = hlv < 0 ? smaL[i] : smaH[i];
     isLong[i] = sslUp > sslDown;
@@ -697,8 +768,12 @@ class BXtrenderResult {
 }
 
 BXtrenderResult calcBXtrender(List<double> close,
-    {int shortL1 = 5, int shortL2 = 20, int shortL3 = 15,
-    int longL1 = 5, int longL2 = 10, String bxType = 'Short and Long term trend'}) {
+    {int shortL1 = 5,
+    int shortL2 = 20,
+    int shortL3 = 15,
+    int longL1 = 5,
+    int longL2 = 10,
+    String bxType = 'Short and Long term trend'}) {
   final n = close.length;
   final emaShort1 = ema(close, shortL1);
   final emaShort2 = ema(close, shortL2);
@@ -715,16 +790,23 @@ BXtrenderResult calcBXtrender(List<double> close,
     final c2 = 3 * b * b + 3 * b * b * b;
     final c3 = -6 * b * b - 3 * b - 3 * b * b * b;
     final c4 = 1 + 3 * b + b * b * b + 3 * b * b;
-    return List.generate(n,
-        (i) => c1 * e6[i] + c2 * e5[i] + c3 * e4[i] + c4 * e3[i]);
+    return List.generate(
+        n, (i) => c1 * e6[i] + c2 * e5[i] + c3 * e4[i] + c4 * e3[i]);
   }
 
   // short term xtrender: RSI(EMA(close, L1) - EMA(close, L2), L3) - 50
   final diff = List.generate(n, (i) => emaShort1[i] - emaShort2[i]);
-  final upDiff = rma(List.generate(n, (i) => diff[i] > 0 ? diff[i] : 0), shortL3);
-  final downDiff = rma(List.generate(n, (i) => diff[i] < 0 ? -diff[i] : 0), shortL3);
-  final shortXR = List.generate(n,
-      (i) => (upDiff[i] + downDiff[i]) != 0 ? 100 - 100 / (1 + upDiff[i] / (downDiff[i] != 0 ? downDiff[i] : 0.001)) - 50 : 0);
+  final upDiff =
+      rma(List.generate(n, (i) => diff[i] > 0 ? diff[i] : 0), shortL3);
+  final downDiff =
+      rma(List.generate(n, (i) => diff[i] < 0 ? -diff[i] : 0), shortL3);
+  final shortXR = List.generate(
+      n,
+      (i) => (upDiff[i] + downDiff[i]) != 0
+          ? 100 -
+              100 / (1 + upDiff[i] / (downDiff[i] != 0 ? downDiff[i] : 0.001)) -
+              50
+          : 0);
   final maShort = t3(shortXR.cast<double>(), 5);
 
   final isLong = List<bool>.filled(n, false);
@@ -737,13 +819,36 @@ BXtrenderResult calcBXtrender(List<double> close,
     }
   } else {
     final emaL1 = ema(close, longL1);
-    final upL = rma(List.generate(n, (i) => i > 0 && close[i] - close[i - 1] > 0 ? close[i] - close[i - 1] : 0), longL2);
-    final downL = rma(List.generate(n, (i) => i > 0 && close[i - 1] - close[i] > 0 ? close[i - 1] - close[i] : 0), longL2);
-    final longXR = List.generate(n,
-        (i) => (upL[i] + downL[i]) != 0 ? 100 - 100 / (1 + upL[i] / (downL[i] != 0 ? downL[i] : 0.001)) - 50 : 0);
+    final upL = rma(
+        List.generate(
+            n,
+            (i) => i > 0 && close[i] - close[i - 1] > 0
+                ? close[i] - close[i - 1]
+                : 0),
+        longL2);
+    final downL = rma(
+        List.generate(
+            n,
+            (i) => i > 0 && close[i - 1] - close[i] > 0
+                ? close[i - 1] - close[i]
+                : 0),
+        longL2);
+    final longXR = List.generate(
+        n,
+        (i) => (upL[i] + downL[i]) != 0
+            ? 100 - 100 / (1 + upL[i] / (downL[i] != 0 ? downL[i] : 0.001)) - 50
+            : 0);
     for (int i = 1; i < n; i++) {
-      isLong[i] = maShort[i] > maShort[i - 1] && longXR[i] > 0 && longXR[i] > longXR[i - 1] && shortXR[i] > shortXR[i - 1] && shortXR[i] > 0;
-      isShort[i] = maShort[i] < maShort[i - 1] && longXR[i] < 0 && longXR[i] < longXR[i - 1] && shortXR[i] < shortXR[i - 1] && shortXR[i] < 0;
+      isLong[i] = maShort[i] > maShort[i - 1] &&
+          longXR[i] > 0 &&
+          longXR[i] > longXR[i - 1] &&
+          shortXR[i] > shortXR[i - 1] &&
+          shortXR[i] > 0;
+      isShort[i] = maShort[i] < maShort[i - 1] &&
+          longXR[i] < 0 &&
+          longXR[i] < longXR[i - 1] &&
+          shortXR[i] < shortXR[i - 1] &&
+          shortXR[i] < 0;
     }
   }
   return BXtrenderResult(isLong: isLong, isShort: isShort);
@@ -799,8 +904,8 @@ class VWAPResult {
       {required this.vwap, required this.isLong, required this.isShort});
 }
 
-VWAPResult calcVWAP(List<double> high, List<double> low,
-    List<double> close, List<int> volume) {
+VWAPResult calcVWAP(
+    List<double> high, List<double> low, List<double> close, List<int> volume) {
   final n = close.length;
   final vwap = List<double>.filled(n, 0);
   double cumPV = 0, cumVol = 0;
@@ -829,8 +934,9 @@ class ChandelierResult {
       {required this.dir, required this.isLong, required this.isShort});
 }
 
-ChandelierResult calcChandelier(List<double> high, List<double> low,
-    List<double> close, {int length = 22, double mult = 3.0, bool useClose = true}) {
+ChandelierResult calcChandelier(
+    List<double> high, List<double> low, List<double> close,
+    {int length = 22, double mult = 3.0, bool useClose = true}) {
   final n = close.length;
   final atrV = atr(high, low, close, length);
   final hh = useClose ? highest(close, length) : highest(high, length);
@@ -843,9 +949,12 @@ ChandelierResult calcChandelier(List<double> high, List<double> low,
   }
   final dir = List<int>.filled(n, 1);
   for (int i = 1; i < n; i++) {
-    if (close[i] > shortStop[i - 1]) dir[i] = 1;
-    else if (close[i] < longStop[i - 1]) dir[i] = -1;
-    else dir[i] = dir[i - 1];
+    if (close[i] > shortStop[i - 1]) {
+      dir[i] = 1;
+    } else if (close[i] < longStop[i - 1])
+      dir[i] = -1;
+    else
+      dir[i] = dir[i - 1];
   }
   return ChandelierResult(
     dir: dir,
@@ -863,27 +972,35 @@ class CCIResult {
   final List<bool> isLong, isShort;
 
   const CCIResult({
-    required this.cci, required this.smoothed,
-    required this.isLong, required this.isShort,
+    required this.cci,
+    required this.smoothed,
+    required this.isLong,
+    required this.isShort,
   });
 }
 
 CCIResult calcCCI(List<double> high, List<double> low, List<double> close,
-    {int length = 20, int upper = 100, int lower = -100,
-    String maType = 'SMA', int smoothLen = 5}) {
+    {int length = 20,
+    int upper = 100,
+    int lower = -100,
+    String maType = 'SMA',
+    int smoothLen = 5}) {
   final n = close.length;
   final src = List.generate(n, (i) => (high[i] + low[i] + close[i]) / 3);
   final ma = sma(src, length);
   final cci = List<double>.filled(n, 0);
   for (int i = length - 1; i < n; i++) {
     double dev = 0;
-    for (int j = 0; j < length; j++) dev += (src[i - j] - ma[i]).abs();
+    for (int j = 0; j < length; j++) {
+      dev += (src[i - j] - ma[i]).abs();
+    }
     dev /= length;
     cci[i] = dev != 0 ? (src[i] - ma[i]) / (0.015 * dev) : 0;
   }
   final smoothed = movingAverage(cci, smoothLen, maType);
   return CCIResult(
-    cci: cci, smoothed: smoothed,
+    cci: cci,
+    smoothed: smoothed,
     isLong: cci.map((v) => v > upper).toList(),
     isShort: cci.map((v) => v < lower).toList(),
   );
@@ -898,24 +1015,38 @@ class ADXResult {
   final List<bool> isLong, isShort;
 
   const ADXResult({
-    required this.adx, required this.diPlus, required this.diMinus,
-    required this.isLong, required this.isShort,
+    required this.adx,
+    required this.diPlus,
+    required this.diMinus,
+    required this.isLong,
+    required this.isShort,
   });
 }
 
 ADXResult calcADX(List<double> high, List<double> low, List<double> close,
-    {int adxLen = 5, int diLen = 10, int keyLevel = 20,
+    {int adxLen = 5,
+    int diLen = 10,
+    int keyLevel = 20,
     String adxType = 'Adx & +Di -Di'}) {
   final n = close.length;
   final trRma = rma(trueRange(high, low, close), diLen);
   final up = change(high).map((v) => v > 0 ? v : 0.0).toList();
   final down = change(low).map((v) => v > 0 ? v : 0.0).toList();
-  final plusDM = rma(List.generate(n, (i) => up[i] > down[i] ? up[i] : 0), diLen);
-  final minusDM = rma(List.generate(n, (i) => down[i] > up[i] ? down[i] : 0), diLen);
-  final diPlus = fixnan(List.generate(n, (i) => trRma[i] != 0 ? 100 * plusDM[i] / trRma[i] : 0));
-  final diMinus = fixnan(List.generate(n, (i) => trRma[i] != 0 ? 100 * minusDM[i] / trRma[i] : 0));
+  final plusDM =
+      rma(List.generate(n, (i) => up[i] > down[i] ? up[i] : 0), diLen);
+  final minusDM =
+      rma(List.generate(n, (i) => down[i] > up[i] ? down[i] : 0), diLen);
+  final diPlus = fixnan(
+      List.generate(n, (i) => trRma[i] != 0 ? 100 * plusDM[i] / trRma[i] : 0));
+  final diMinus = fixnan(
+      List.generate(n, (i) => trRma[i] != 0 ? 100 * minusDM[i] / trRma[i] : 0));
   final sum = List.generate(n, (i) => diPlus[i] + diMinus[i]);
-  final adx = rma(List.generate(n, (i) => sum[i] != 0 ? 100 * (diPlus[i] - diMinus[i]).abs() / sum[i] : 0), adxLen);
+  final adx = rma(
+      List.generate(
+          n,
+          (i) =>
+              sum[i] != 0 ? 100 * (diPlus[i] - diMinus[i]).abs() / sum[i] : 0),
+      adxLen);
 
   final isLong = List<bool>.filled(n, false);
   final isShort = List<bool>.filled(n, false);
@@ -927,11 +1058,20 @@ ADXResult calcADX(List<double> high, List<double> low, List<double> close,
       isLong[i] = diPlus[i] > diMinus[i] && adx[i] >= keyLevel;
       isShort[i] = diPlus[i] < diMinus[i] && adx[i] >= keyLevel;
     } else {
-      isLong[i] = diPlus[i] > diMinus[i] && adx[i] >= keyLevel && (diPlus[i] - diMinus[i]) > 1;
-      isShort[i] = diPlus[i] < diMinus[i] && adx[i] >= keyLevel && (diMinus[i] - diPlus[i]) > 1;
+      isLong[i] = diPlus[i] > diMinus[i] &&
+          adx[i] >= keyLevel &&
+          (diPlus[i] - diMinus[i]) > 1;
+      isShort[i] = diPlus[i] < diMinus[i] &&
+          adx[i] >= keyLevel &&
+          (diMinus[i] - diPlus[i]) > 1;
     }
   }
-  return ADXResult(adx: adx, diPlus: diPlus, diMinus: diMinus, isLong: isLong, isShort: isShort);
+  return ADXResult(
+      adx: adx,
+      diPlus: diPlus,
+      diMinus: diMinus,
+      isLong: isLong,
+      isShort: isShort);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1006,8 +1146,11 @@ class WAEResult {
 }
 
 WAEResult calcWAE(List<double> high, List<double> low, List<double> close,
-    {int sensitivity = 150, int fastLen = 20, int slowLen = 40,
-    int channelLen = 20, double mult = 2.0}) {
+    {int sensitivity = 150,
+    int fastLen = 20,
+    int slowLen = 40,
+    int channelLen = 20,
+    double mult = 2.0}) {
   final n = close.length;
   final fastMA = ema(close, fastLen);
   final slowMA = ema(close, slowLen);
@@ -1028,7 +1171,8 @@ WAEResult calcWAE(List<double> high, List<double> low, List<double> close,
     final trendUp = t1[i] >= 0 ? t1[i] : 0.0;
     final trendDown = t1[i] < 0 ? -t1[i] : 0.0;
     isLong[i] = trendUp > e1[i] && e1[i] > deadzone[i] && trendUp > deadzone[i];
-    isShort[i] = trendDown > e1[i] && e1[i] > deadzone[i] && trendDown > deadzone[i];
+    isShort[i] =
+        trendDown > e1[i] && e1[i] > deadzone[i] && trendDown > deadzone[i];
   }
   return WAEResult(isLong: isLong, isShort: isShort);
 }
@@ -1068,7 +1212,8 @@ class DPOResult {
   const DPOResult({required this.isLong, required this.isShort});
 }
 
-DPOResult calcDPO(List<double> close, {int period = 10, bool centered = false}) {
+DPOResult calcDPO(List<double> close,
+    {int period = 10, bool centered = false}) {
   final n = close.length;
   final ma = sma(close, period);
   final isLong = List<bool>.filled(n, false);
@@ -1094,8 +1239,8 @@ class HACOLTResult {
   const HACOLTResult({required this.isLong, required this.isShort});
 }
 
-HACOLTResult calcHACOLT(List<double> open, List<double> high,
-    List<double> low, List<double> close,
+HACOLTResult calcHACOLT(
+    List<double> open, List<double> high, List<double> low, List<double> close,
     {int temaPeriod = 55, int emaPeriod = 60, double candleFactor = 1.1}) {
   final n = close.length;
   final haOpen = List<double>.filled(n, 0);
@@ -1104,12 +1249,20 @@ HACOLTResult calcHACOLT(List<double> open, List<double> high,
   for (int i = 1; i < n; i++) {
     haOpen[i] = (haOpen[i - 1] + hl2[i - 1]) / 2;
   }
-  final haClose = List.generate(n,
-      (i) => (haOpen[i] + [high[i], haOpen[i]].reduce(math.max) + [low[i], haOpen[i]].reduce(math.min) + hl2[i]) / 4);
+  final haClose = List.generate(
+      n,
+      (i) =>
+          (haOpen[i] +
+              [high[i], haOpen[i]].reduce(math.max) +
+              [low[i], haOpen[i]].reduce(math.min) +
+              hl2[i]) /
+          4);
   final thaClose = tema(haClose, temaPeriod);
   final thl2 = tema(hl2, temaPeriod);
-  final haCloseSmooth = List.generate(n, (i) => 2 * thaClose[i] - tema(thaClose, temaPeriod)[i]);
-  final hl2Smooth = List.generate(n, (i) => 2 * thl2[i] - tema(thl2, temaPeriod)[i]);
+  final haCloseSmooth =
+      List.generate(n, (i) => 2 * thaClose[i] - tema(thaClose, temaPeriod)[i]);
+  final hl2Smooth =
+      List.generate(n, (i) => 2 * thl2[i] - tema(thl2, temaPeriod)[i]);
   final emaClose = ema(close, emaPeriod);
 
   final isLong = List<bool>.filled(n, false);
@@ -1118,17 +1271,28 @@ HACOLTResult calcHACOLT(List<double> open, List<double> high,
   var hacoltUpWithOffset = false;
 
   for (int i = 1; i < n; i++) {
-    final shortCandle = (close[i] - open[i]).abs() < ((high[i] - low[i]) * candleFactor);
-    final keepN1 = ((haClose[i] >= haOpen[i]) && (haClose[i - 1] >= haOpen[i - 1])) ||
-        (close[i] >= haClose[i]) || (high[i] > high[i - 1]) || (low[i] > low[i - 1]) ||
-        (hl2Smooth[i] >= haCloseSmooth[i]);
-    final keepAll1 = keepN1 || (i > 1 && keepN1 && ((close[i] >= open[i]) || (close[i] >= close[i - 1])));
+    final shortCandle =
+        (close[i] - open[i]).abs() < ((high[i] - low[i]) * candleFactor);
+    final keepN1 =
+        ((haClose[i] >= haOpen[i]) && (haClose[i - 1] >= haOpen[i - 1])) ||
+            (close[i] >= haClose[i]) ||
+            (high[i] > high[i - 1]) ||
+            (low[i] > low[i - 1]) ||
+            (hl2Smooth[i] >= haCloseSmooth[i]);
+    final keepAll1 = keepN1 ||
+        (i > 1 &&
+            keepN1 &&
+            ((close[i] >= open[i]) || (close[i] >= close[i - 1])));
     final keep13 = shortCandle && (high[i] >= low[i - 1]);
     final utr = keepAll1 || (i > 1 && keepAll1 && keep13);
-    final keepN2 = (haClose[i] < haOpen[i]) && (haClose[i - 1] < haOpen[i - 1]) ||
-        (hl2Smooth[i] < haCloseSmooth[i]);
+    final keepN2 =
+        (haClose[i] < haOpen[i]) && (haClose[i - 1] < haOpen[i - 1]) ||
+            (hl2Smooth[i] < haCloseSmooth[i]);
     final keep23 = shortCandle && (low[i] <= high[i - 1]);
-    final keepAll2 = keepN2 || (i > 1 && keepN2 && ((close[i] < open[i]) || (close[i] < close[i - 1])));
+    final keepAll2 = keepN2 ||
+        (i > 1 &&
+            keepN2 &&
+            ((close[i] < open[i]) || (close[i] < close[i - 1])));
     final dtr = keepAll2 || (i > 1 && keepAll2 && keep23);
     final upw = dtr && (i > 1 && dtr) && utr;
     final dnw = utr && (i > 1 && utr) && dtr;
@@ -1159,7 +1323,12 @@ AwesomeResult calcAwesome(List<double> high, List<double> low,
   final smaS = sma(hl2, slow);
   final ao = List.generate(n, (i) => smaF[i] - smaS[i]);
   final diff = change(ao);
-  final nRes = List.generate(n, (i) => smaF[i] - smaS[i] - sma(sma(hl2, fast).map((v) => v - smaS[0]).toList(), fast)[i]);
+  final nRes = List.generate(
+      n,
+      (i) =>
+          smaF[i] -
+          smaS[i] -
+          sma(sma(hl2, fast).map((v) => v - smaS[0]).toList(), fast)[i]);
 
   final isLong = List<bool>.filled(n, false);
   final isShort = List<bool>.filled(n, false);
@@ -1192,8 +1361,8 @@ WolfpackResult calcWolfpack(List<double> close,
     {int fastLen = 3, int slowLen = 8}) {
   final fastMA = ema(close, fastLen);
   final slowMA = ema(close, slowLen);
-  final spread = List.generate(
-      close.length, (i) => (fastMA[i] - slowMA[i]) * 1.001);
+  final spread =
+      List.generate(close.length, (i) => (fastMA[i] - slowMA[i]) * 1.001);
   return WolfpackResult(
     isLong: spread.map<bool>((v) => v > 0).toList(),
     isShort: spread.map<bool>((v) => v < 0).toList(),
@@ -1211,8 +1380,12 @@ class QQEResult {
 }
 
 QQEResult calcQQE(List<double> close,
-    {int rsiPeriod = 6, int sf = 5, double qqe = 3, double threshold = 3,
-    String qqeType = 'Line', double qqe2 = 1.61}) {
+    {int rsiPeriod = 6,
+    int sf = 5,
+    double qqe = 3,
+    double threshold = 3,
+    String qqeType = 'Line',
+    double qqe2 = 1.61}) {
   final n = close.length;
   final wilders = rsiPeriod * 2 - 1;
 
@@ -1220,9 +1393,17 @@ QQEResult calcQQE(List<double> close,
     double u = 0, d = 0;
     for (int i = 1; i <= len && i < src.length; i++) {
       final ch = src[i] - src[i - 1];
-      if (ch > 0) u += ch; else d -= ch;
+      if (ch > 0) {
+        u += ch;
+      } else {
+        d -= ch;
+      }
     }
-    return d == 0 ? 100 : u == 0 ? 0 : 100 - 100 / (1 + u / d);
+    return d == 0
+        ? 100
+        : u == 0
+            ? 0
+            : 100 - 100 / (1 + u / d);
   }
 
   final rsi = List<double>.filled(n, 50);
@@ -1233,9 +1414,17 @@ QQEResult calcQQE(List<double> close,
     double u = 0, d = 0;
     for (int j = 1; j <= rsiPeriod && j <= i; j++) {
       final ch = chunk[j] - chunk[j - 1];
-      if (ch > 0) u += ch; else d -= ch;
+      if (ch > 0) {
+        u += ch;
+      } else {
+        d -= ch;
+      }
     }
-    rsi[i] = d == 0 ? 100 : u == 0 ? 0 : 100 - 100 / (1 + u / d);
+    rsi[i] = d == 0
+        ? 100
+        : u == 0
+            ? 0
+            : 100 - 100 / (1 + u / d);
     rsiMa[i] = ema(rsi, sf)[i];
   }
 
@@ -1246,9 +1435,17 @@ QQEResult calcQQE(List<double> close,
     double u = 0, d = 0;
     for (int j = 1; j <= rsiPeriod && j <= i; j++) {
       final ch = chunk[j] - chunk[j - 1];
-      if (ch > 0) u += ch; else d -= ch;
+      if (ch > 0) {
+        u += ch;
+      } else {
+        d -= ch;
+      }
     }
-    rsi2[i] = d == 0 ? 100 : u == 0 ? 0 : 100 - 100 / (1 + u / d);
+    rsi2[i] = d == 0
+        ? 100
+        : u == 0
+            ? 0
+            : 100 - 100 / (1 + u / d);
     rsiMa2[i] = ema(rsi2, sf)[i];
   }
 
@@ -1295,16 +1492,22 @@ HullResult calcHull(List<double> close,
     if (m == 'Ehma') {
       final half = ema(src, len ~/ 2);
       final full = ema(src, len);
-      final diff = List.generate(src.length,
-          (i) => i < half.length && i < full.length ? 2 * half[i] - full[i] : double.nan);
+      final diff = List.generate(
+          src.length,
+          (i) => i < half.length && i < full.length
+              ? 2 * half[i] - full[i]
+              : double.nan);
       return ema(diff, (math.sqrt(len)).round());
     }
     // THMA
     final t3 = wma(src, len ~/ 3);
     final t2 = wma(src, len ~/ 2);
     final t1 = wma(src, len);
-    return List.generate(src.length,
-        (i) => i < t3.length && i < t2.length && i < t1.length ? 3 * t3[i] - t2[i] - t1[i] : double.nan);
+    return List.generate(
+        src.length,
+        (i) => i < t3.length && i < t2.length && i < t1.length
+            ? 3 * t3[i] - t2[i] - t1[i]
+            : double.nan);
   }
 
   final hull = hullFunc(close, len, mode);
@@ -1328,7 +1531,9 @@ class VortexResult {
 }
 
 VortexResult calcVortex(List<double> high, List<double> low, List<double> close,
-    {int period = 14, double upper = 1.1, double lower = 0.9,
+    {int period = 14,
+    double upper = 1.1,
+    double lower = 0.9,
     String type = 'Simple'}) {
   final n = high.length;
   final vmp = List<double>.filled(n, 0);
@@ -1355,13 +1560,20 @@ VortexResult calcVortex(List<double> high, List<double> low, List<double> close,
       vipCond[i] = vip[i] > vim[i];
       vimCond[i] = vip[i] < vim[i];
     } else {
-      vipCond[i] = vip[i] > vim[i] && vip[i] > upper && vip[i] > vip[i > 0 ? i - 1 : 0] &&
-          vim[i] < vim[i > 0 ? i - 1 : 0] && vim[i > 0 ? i - 1 : 0] <= lower &&
+      vipCond[i] = vip[i] > vim[i] &&
+          vip[i] > upper &&
+          vip[i] > vip[i > 0 ? i - 1 : 0] &&
+          vim[i] < vim[i > 0 ? i - 1 : 0] &&
+          vim[i > 0 ? i - 1 : 0] <= lower &&
           vip[i > 0 ? i - 1 : 0] >= upper;
       final vipPrev = i > 0 ? vip[i - 1] : 0;
       final vimPrev = i > 0 ? vim[i - 1] : 0;
-      vimCond[i] = vip[i] < vim[i] && vim[i] > upper && vim[i] > vimPrev &&
-          vip[i] < vipPrev && vipPrev <= lower && vipPrev >= upper;
+      vimCond[i] = vip[i] < vim[i] &&
+          vim[i] > upper &&
+          vim[i] > vimPrev &&
+          vip[i] < vipPrev &&
+          vipPrev <= lower &&
+          vipPrev >= upper;
     }
   }
   return VortexResult(vipCondition: vipCond, vimCondition: vimCond);
@@ -1378,7 +1590,9 @@ class BBOSCResult {
 }
 
 BBOSCResult calcBBOsc(List<double> close, List<double> open,
-    {int length = 20, double mult = 2.0, int trigLen = 4,
+    {int length = 20,
+    double mult = 2.0,
+    int trigLen = 4,
     String type = 'Entering Lower/Upper Band'}) {
   final n = close.length;
   final basis = sma(close, length);
@@ -1386,9 +1600,21 @@ BBOSCResult calcBBOsc(List<double> close, List<double> open,
   final upper = List<double>.generate(n, (i) => basis[i] + dev[i]);
   final lower = List<double>.generate(n, (i) => basis[i] - dev[i]);
 
-  final uPercent = List<double>.generate(n, (i) => upper[i] != 0 ? (upper[i] - close[i]) / (upper[i] + close[i] / 2) : 0);
-  final lPercent = List<double>.generate(n, (i) => lower[i] != 0 ? (lower[i] - close[i]) / (lower[i] + close[i] / 2) : 0);
-  final bPercent = List<double>.generate(n, (i) => basis[i] != 0 ? (basis[i] - close[i]) / (basis[i] + close[i] / 2) : 0);
+  final uPercent = List<double>.generate(
+      n,
+      (i) => upper[i] != 0
+          ? (upper[i] - close[i]) / (upper[i] + close[i] / 2)
+          : 0);
+  final lPercent = List<double>.generate(
+      n,
+      (i) => lower[i] != 0
+          ? (lower[i] - close[i]) / (lower[i] + close[i] / 2)
+          : 0);
+  final bPercent = List<double>.generate(
+      n,
+      (i) => basis[i] != 0
+          ? (basis[i] - close[i]) / (basis[i] + close[i] / 2)
+          : 0);
   final uSmooth = wma(uPercent, 6);
   final lSmooth = wma(lPercent, 6);
   final bSmooth = wma(bPercent, 6);
@@ -1422,8 +1648,9 @@ class RangeDetectorResult {
       {required this.isLong, required this.isShort, required this.signal});
 }
 
-RangeDetectorResult calcRangeDetector(List<double> high, List<double> low,
-    List<double> close, {int length = 20, double mult = 1.0, int atrLen = 500}) {
+RangeDetectorResult calcRangeDetector(
+    List<double> high, List<double> low, List<double> close,
+    {int length = 20, double mult = 1.0, int atrLen = 500}) {
   final n = close.length;
   final atrV = atr(high, low, close, atrLen).map((v) => v * mult).toList();
   final ma = sma(close, length);
@@ -1452,9 +1679,9 @@ class TrendlineBOResult {
   const TrendlineBOResult({required this.buySignal, required this.sellSignal});
 }
 
-TrendlineBOResult calcTrendlineBO(List<double> high, List<double> low,
-    List<double> close, {int length = 14, double mult = 1.0,
-    String calcMethod = 'Atr'}) {
+TrendlineBOResult calcTrendlineBO(
+    List<double> high, List<double> low, List<double> close,
+    {int length = 14, double mult = 1.0, String calcMethod = 'Atr'}) {
   final n = close.length;
   final atrV = atr(high, low, close, length);
   final slope = List<double>.filled(n, atrV[0] / length * mult);
@@ -1467,12 +1694,14 @@ TrendlineBOResult calcTrendlineBO(List<double> high, List<double> low,
   final dnos = List<int>.filled(n, 0);
 
   for (int i = length; i < n; i++) {
-    if (i == length || (i > 0 && high[i] > high[i - 1] && close[i] > close[i - 1])) {
+    if (i == length ||
+        (i > 0 && high[i] > high[i - 1] && close[i] > close[i - 1])) {
       upper[i] = high[i];
     } else {
       upper[i] = upper[i - 1] - slope[i];
     }
-    if (i == length || (i > 0 && low[i] < low[i - 1] && close[i] < close[i - 1])) {
+    if (i == length ||
+        (i > 0 && low[i] < low[i - 1] && close[i] < close[i - 1])) {
       lower[i] = low[i];
     } else {
       lower[i] = lower[i - 1] + slope[i];
@@ -1500,8 +1729,9 @@ class ChaikinResult {
   const ChaikinResult({required this.isLong, required this.isShort});
 }
 
-ChaikinResult calcChaikin(List<double> high, List<double> low,
-    List<double> close, List<int> volume, {int length = 20}) {
+ChaikinResult calcChaikin(
+    List<double> high, List<double> low, List<double> close, List<int> volume,
+    {int length = 20}) {
   final n = close.length;
   final mf = List<double>.filled(n, 0);
   for (int i = length - 1; i < n; i++) {
@@ -1509,9 +1739,7 @@ ChaikinResult calcChaikin(List<double> high, List<double> low,
     for (int j = 0; j < length; j++) {
       final h = high[i - j], l = low[i - j], c = close[i - j];
       final v = volume[i - j].toDouble();
-      ad += (c == h && c == l) || h == l
-          ? 0
-          : (2 * c - l - h) / (h - l) * v;
+      ad += (c == h && c == l) || h == l ? 0 : (2 * c - l - h) / (h - l) * v;
       vSum += v;
     }
     mf[i] = vSum != 0 ? ad / vSum : 0;
@@ -1532,8 +1760,8 @@ class VolumeResult {
   const VolumeResult({required this.isLong, required this.isShort});
 }
 
-VolumeResult calcVolume(List<double> open, List<double> close,
-    List<int> volume, {String type = 'volume above MA', int smaLen = 20}) {
+VolumeResult calcVolume(List<double> open, List<double> close, List<int> volume,
+    {String type = 'volume above MA', int smaLen = 20}) {
   final volDouble = volume.map((v) => v.toDouble()).toList();
   final volMA = sma(volDouble, smaLen);
   final n = close.length;
@@ -1541,10 +1769,14 @@ VolumeResult calcVolume(List<double> open, List<double> close,
   final upVol = List<double>.filled(n, 0);
   final downVol = List<double>.filled(n, 0);
   for (int i = 0; i < n; i++) {
-    if (close[i] > open[i]) upVol[i] = volDouble[i];
-    else if (close[i] < open[i]) downVol[i] = -volDouble[i];
-    else if (i > 0 && close[i] >= close[i - 1]) upVol[i] = volDouble[i];
-    else downVol[i] = -volDouble[i];
+    if (close[i] > open[i]) {
+      upVol[i] = volDouble[i];
+    } else if (close[i] < open[i])
+      downVol[i] = -volDouble[i];
+    else if (i > 0 && close[i] >= close[i - 1])
+      upVol[i] = volDouble[i];
+    else
+      downVol[i] = -volDouble[i];
   }
 
   final delta = List.generate(n, (i) => upVol[i] + downVol[i]);
@@ -1582,8 +1814,8 @@ McGinleyResult calcMcGinley(List<double> close, {int length = 14}) {
   final mg = List<double>.filled(close.length, 0);
   mg[0] = close[0];
   for (int i = 1; i < close.length; i++) {
-    mg[i] = mg[i - 1] + (close[i] - mg[i - 1]) /
-        (length * math.pow(close[i] / mg[i - 1], 4));
+    mg[i] = mg[i - 1] +
+        (close[i] - mg[i - 1]) / (length * math.pow(close[i] / mg[i - 1], 4));
   }
   return McGinleyResult(
     mg: mg,
@@ -1601,13 +1833,17 @@ class EMACrossResult {
   final List<bool> isLong, isShort;
 
   const EMACrossResult({
-    required this.fast, required this.slow,
-    required this.isLong, required this.isShort,
+    required this.fast,
+    required this.slow,
+    required this.isLong,
+    required this.isShort,
   });
 }
 
 EMACrossResult calc2EMACross(List<double> close,
-    {int fastLen = 50, int slowLen = 200, String signalType = 'Default',
+    {int fastLen = 50,
+    int slowLen = 200,
+    String signalType = 'Default',
     int lookback = 3}) {
   final fastMA = ema(close, fastLen);
   final slowMA = ema(close, slowLen);
@@ -1622,7 +1858,8 @@ EMACrossResult calc2EMACross(List<double> close,
       // Lookback method: crosses within lookback period
       bool foundCross = false;
       for (int j = 0; j <= lookback && i - j >= 1; j++) {
-        if (fastMA[i - j] > slowMA[i - j] && fastMA[i - j - 1] <= slowMA[i - j - 1]) {
+        if (fastMA[i - j] > slowMA[i - j] &&
+            fastMA[i - j - 1] <= slowMA[i - j - 1]) {
           foundCross = true;
           break;
         }
@@ -1630,7 +1867,8 @@ EMACrossResult calc2EMACross(List<double> close,
       isLong[i] = foundCross && fastMA[i] > slowMA[i];
       foundCross = false;
       for (int j = 0; j <= lookback && i - j >= 1; j++) {
-        if (fastMA[i - j] < slowMA[i - j] && fastMA[i - j - 1] >= slowMA[i - j - 1]) {
+        if (fastMA[i - j] < slowMA[i - j] &&
+            fastMA[i - j - 1] >= slowMA[i - j - 1]) {
           foundCross = true;
           break;
         }
@@ -1638,7 +1876,8 @@ EMACrossResult calc2EMACross(List<double> close,
       isShort[i] = foundCross && fastMA[i] < slowMA[i];
     }
   }
-  return EMACrossResult(fast: fastMA, slow: slowMA, isLong: isLong, isShort: isShort);
+  return EMACrossResult(
+      fast: fastMA, slow: slowMA, isLong: isLong, isShort: isShort);
 }
 
 EMACrossResult calc3EMACross(List<double> close,
@@ -1646,10 +1885,10 @@ EMACrossResult calc3EMACross(List<double> close,
   final e1 = ema(close, fast);
   final e2 = ema(close, mid);
   final e3 = ema(close, slow);
-  final isLong = List.generate(close.length,
-      (i) => e1[i] > e2[i] && e1[i] > e3[i] && e2[i] > e3[i]);
-  final isShort = List.generate(close.length,
-      (i) => e1[i] < e2[i] && e1[i] < e3[i] && e2[i] < e3[i]);
+  final isLong = List.generate(
+      close.length, (i) => e1[i] > e2[i] && e1[i] > e3[i] && e2[i] > e3[i]);
+  final isShort = List.generate(
+      close.length, (i) => e1[i] < e2[i] && e1[i] < e3[i] && e2[i] < e3[i]);
   return EMACrossResult(fast: e1, slow: e2, isLong: isLong, isShort: isShort);
 }
 
@@ -1690,8 +1929,13 @@ class STCResult {
 }
 
 STCResult calcSTC(List<double> close,
-    {int fast = 23, int slow = 50, int cycle = 10, int d1 = 3, int d2 = 3,
-    int upper = 75, int lower = 25}) {
+    {int fast = 23,
+    int slow = 50,
+    int cycle = 10,
+    int d1 = 3,
+    int d2 = 3,
+    int upper = 75,
+    int lower = 25}) {
   final n = close.length;
   final fastMA = ema(close, fast);
   final slowMA = ema(close, slow);
@@ -1705,12 +1949,14 @@ STCResult calcSTC(List<double> close,
     final ll = macd.sublist(0, i + 1).reduce(math.min);
     k[i] = hh != ll ? 100 * (macd[i] - ll) / (hh - ll) : 50;
   }
-  for (int i = 0; i < n; i++) d[i] = ema(k, d1)[i];
+  for (int i = 0; i < n; i++) {
+    d[i] = ema(k, d1)[i];
+  }
   for (int i = cycle; i < n; i++) {
     final hh = d.sublist(0, i + 1).reduce(math.max);
     final ll = d.sublist(0, i + 1).reduce(math.min);
     final kd = hh != ll ? 100 * (d[i] - ll) / (hh - ll) : 50.0;
-    stc[i] = ema(List<double>.generate(n, (j) => kd), d2)[i].clamp(0.0, 100.0) as double;
+    stc[i] = ema(List<double>.generate(n, (j) => kd), d2)[i].clamp(0.0, 100.0);
   }
 
   return STCResult(
@@ -1731,8 +1977,12 @@ class DVResult {
 }
 
 DVResult calcDV(List<double> high, List<double> low, List<double> close,
-    {int visAtr = 13, int visStd = 20, int sedAtr = 40, int sedStd = 100,
-    double threshold = 1.4, bool lagSup = true,
+    {int visAtr = 13,
+    int visStd = 20,
+    int sedAtr = 40,
+    int sedStd = 100,
+    double threshold = 1.4,
+    bool lagSup = true,
     String type = 'Simple'}) {
   final n = close.length;
   final atrVis = atr(high, low, close, visAtr);
@@ -1743,7 +1993,8 @@ DVResult calcDV(List<double> high, List<double> low, List<double> close,
 
   for (int i = 0; i < n; i++) {
     final vol = atrSed[i] != 0
-        ? atrVis[i] / atrSed[i] + (lagSup ? 0.5 * (i > 0 ? atrVis[i - 1] - atrSed[i - 1] : 0) : 0)
+        ? atrVis[i] / atrSed[i] +
+            (lagSup ? 0.5 * (i > 0 ? atrVis[i - 1] - atrSed[i - 1] : 0) : 0)
         : 0;
     final antiThres = stdSed[i] != 0 ? stdVis[i] / stdSed[i] : 0;
     final t = threshold - antiThres;
@@ -1781,7 +2032,9 @@ CIResult calcCI(List<double> high, List<double> low, List<double> close,
 
   for (int i = length - 1; i < n; i++) {
     double sumTr = 0;
-    for (int j = 0; j < length; j++) sumTr += tr[i - j];
+    for (int j = 0; j < length; j++) {
+      sumTr += tr[i - j];
+    }
     idx[i] = hh[i] != ll[i] && (hh[i] - ll[i]) > 0
         ? 100 * log10(sumTr / (hh[i] - ll[i])) / log10(length.toDouble())
         : 50;

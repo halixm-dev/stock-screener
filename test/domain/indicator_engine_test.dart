@@ -205,7 +205,9 @@ void main() {
       final low = <double>[];
       final close = <double>[];
       for (int i = 0; i < 20; i++) {
-        close.add(90.0); high.add(91.0); low.add(89.0);
+        close.add(90.0);
+        high.add(91.0);
+        low.add(89.0);
       }
       for (int i = 0; i < 30; i++) {
         close.add(90.0 + (i + 1) * 0.5);
@@ -217,7 +219,10 @@ void main() {
       expect(r.d[49], greaterThan(50));
       bool hasKgtD = false;
       for (int i = 1; i < close.length; i++) {
-        if (r.k[i] > r.d[i]) { hasKgtD = true; break; }
+        if (r.k[i] > r.d[i]) {
+          hasKgtD = true;
+          break;
+        }
       }
       expect(hasKgtD, isTrue);
     });

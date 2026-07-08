@@ -1,22 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:hive/hive.dart';
 import '../domain/ohlcv_data.dart';
-
-class TickerInfo {
-  final String symbol;
-  final String name;
-
-  const TickerInfo({required this.symbol, required this.name});
-}
+import 'cache_entry.dart';
 
 abstract class TickerRepository {
-  Future<List<TickerInfo>> fetchUniverse();
+  Future<List<String>> fetchUniverse();
   Future<OhlcvData?> fetchOhlcv(String symbol);
   Future<void> cacheOhlcv(String symbol, OhlcvData data);
   Future<OhlcvData?> getCachedOhlcv(String symbol);
-  Future<void> cacheUniverse(List<TickerInfo> tickers);
-  Future<List<TickerInfo>?> getCachedUniverse();
+  Future<void> cacheUniverse(List<String> tickers);
+  Future<List<String>?> getCachedUniverse({bool ignoreTtl = false});
   Future<DateTime?> getLastCachedDate();
 }
 
@@ -25,6 +20,7 @@ class YahooFinanceTickerRepository implements TickerRepository {
   final int batchSize;
   final int throttleMs;
   final http.Client _client;
+  final Box? universeBox;
 
   Future<void> _throttleQueue = Future.value();
 
@@ -33,6 +29,7 @@ class YahooFinanceTickerRepository implements TickerRepository {
     this.batchSize = 20,
     this.throttleMs = 500,
     http.Client? client,
+    this.universeBox,
   }) : _client = client ?? http.Client();
 
   Future<T> _enqueue<T>(Future<T> Function() action) {
@@ -51,8 +48,44 @@ class YahooFinanceTickerRepository implements TickerRepository {
   }
 
   @override
-  Future<List<TickerInfo>> fetchUniverse() async {
-    throw UnimplementedError('fetchUniverse not yet wired to API');
+  Future<List<String>> fetchUniverse() async {
+    // 1. Check cache first
+    final cached = await getCachedUniverse();
+    if (cached != null) {
+      return cached;
+    }
+
+    // 2. Cache miss or expired, fetch from network
+    try {
+      final url = Uri.parse(
+        'https://halixm-dev.github.io/stock-screener/tickers.json',
+      );
+      final response = await _client.get(url);
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to fetch universe: HTTP ${response.statusCode}',
+        );
+      }
+
+      final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+      final tickers = jsonList.cast<String>();
+
+      // 3. Cache the new data
+      await cacheUniverse(tickers);
+      return tickers;
+    } catch (e) {
+      // 4. Network error, attempt fallback to stale cache
+      final stale = await getCachedUniverse(ignoreTtl: true);
+      if (stale != null) {
+        print(
+          'Warning: Network fetch failed, falling back to stale universe cache. Error: $e',
+        );
+        return stale;
+      }
+      // If no stale cache exists, rethrow
+      rethrow;
+    }
   }
 
   @override
@@ -95,7 +128,11 @@ class YahooFinanceTickerRepository implements TickerRepository {
       final rawClose = quoteData['close'] as List?;
       final rawVolume = quoteData['volume'] as List?;
 
-      if (rawOpen == null || rawHigh == null || rawLow == null || rawClose == null || rawVolume == null) {
+      if (rawOpen == null ||
+          rawHigh == null ||
+          rawLow == null ||
+          rawClose == null ||
+          rawVolume == null) {
         return null;
       }
 
@@ -106,7 +143,11 @@ class YahooFinanceTickerRepository implements TickerRepository {
       final List<int> volume = [];
 
       for (var i = 0; i < timestamp.length; i++) {
-        if (rawOpen[i] == null || rawHigh[i] == null || rawLow[i] == null || rawClose[i] == null || rawVolume[i] == null) {
+        if (rawOpen[i] == null ||
+            rawHigh[i] == null ||
+            rawLow[i] == null ||
+            rawClose[i] == null ||
+            rawVolume[i] == null) {
           continue;
         }
 
@@ -140,17 +181,64 @@ class YahooFinanceTickerRepository implements TickerRepository {
   }
 
   @override
-  Future<void> cacheUniverse(List<TickerInfo> tickers) async {
-    throw UnimplementedError('cacheUniverse not yet wired to Hive');
+  Future<void> cacheUniverse(List<String> tickers) async {
+    if (universeBox == null) return;
+
+    final entry = CacheEntry<List<String>>(
+      data: tickers,
+      createdAt: DateTime.now(),
+    );
+    await universeBox!.put('tickers', entry.toMap());
   }
 
   @override
-  Future<List<TickerInfo>?> getCachedUniverse() async {
-    throw UnimplementedError('getCachedUniverse not yet wired to Hive');
+  Future<List<String>?> getCachedUniverse({bool ignoreTtl = false}) async {
+    if (universeBox == null) return null;
+
+    final map = universeBox!.get('tickers');
+    if (map == null) return null;
+
+    try {
+      final Map<dynamic, dynamic> dynamicMap = map is Map
+          ? map
+          : Map<dynamic, dynamic>.from(map as Map);
+
+      final entry = CacheEntry<List<String>>.fromMap(
+        dynamicMap,
+        (data) => (data as List).cast<String>(),
+      );
+
+      if (!ignoreTtl && entry.isExpired(const Duration(days: 7))) {
+        await universeBox!.delete('tickers');
+        return null;
+      }
+
+      return entry.data;
+    } catch (e) {
+      // In case of migration issues or corrupted cache
+      print('Warning: Failed to parse cached universe. Error: $e');
+      return null;
+    }
   }
 
   @override
   Future<DateTime?> getLastCachedDate() async {
-    throw UnimplementedError('getLastCachedDate not yet wired to Hive');
+    if (universeBox == null) return null;
+
+    final map = universeBox!.get('tickers');
+    if (map == null) return null;
+
+    try {
+      final dynamicMap = map is Map
+          ? map
+          : Map<dynamic, dynamic>.from(map as Map);
+      final entry = CacheEntry<List<String>>.fromMap(
+        dynamicMap,
+        (data) => [], // We only care about the date here
+      );
+      return entry.createdAt;
+    } catch (e) {
+      return null;
+    }
   }
 }

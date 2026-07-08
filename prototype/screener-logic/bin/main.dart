@@ -1,9 +1,8 @@
 import 'dart:io';
 import 'dart:math' as math;
-import '../lib/models.dart';
-import '../lib/math_utils.dart';
-import '../lib/indicator_engine.dart';
-import '../lib/signal_engine.dart';
+import 'package:screener_prototype/models.dart';
+import 'package:screener_prototype/indicator_engine.dart';
+import 'package:screener_prototype/signal_engine.dart';
 
 /// Generates synthetic OHLCV data that exercises all indicator edge cases.
 /// 200 bars of realistic-ish IDX stock data.
@@ -20,13 +19,13 @@ OhlcvData generateMockData() {
   // Scenario: uptrend, downtrend, consolidation, reversal
   for (int i = 0; i < n; i++) {
     final trend = i < 60
-        ? 1.0    // uptrend
+        ? 1.0 // uptrend
         : i < 100
-            ? -0.5  // correction
+            ? -0.5 // correction
             : i < 140
-                ? 2.0  // strong uptrend
+                ? 2.0 // strong uptrend
                 : i < 175
-                    ? -1.5  // sharp selloff
+                    ? -1.5 // sharp selloff
                     : 0.3; // recovery
 
     final noise = (rng.nextDouble() - 0.5) * 50;
@@ -38,7 +37,8 @@ OhlcvData generateMockData() {
     volume[i] = (100000000 + rng.nextDouble() * 500000000).round();
     price = close[i];
   }
-  return OhlcvData(open: open, high: high, low: low, close: close, volume: volume);
+  return OhlcvData(
+      open: open, high: high, low: low, close: close, volume: volume);
 }
 
 /// Generate a scenario with clear reversal for testing fresh signal detection
@@ -54,10 +54,10 @@ OhlcvData generateReversalData() {
 
   for (int i = 0; i < n; i++) {
     final trend = i < 70
-        ? -1.0    // sustained downtrend
+        ? -1.0 // sustained downtrend
         : i < 80
-            ? 0.0   // neutral zone
-            : 1.5;  // strong reversal uptrend
+            ? 0.0 // neutral zone
+            : 1.5; // strong reversal uptrend
     final noise = (rng.nextDouble() - 0.5) * 40;
     final move = trend + noise;
     open[i] = price;
@@ -67,14 +67,18 @@ OhlcvData generateReversalData() {
     volume[i] = (100000000 + rng.nextDouble() * 500000000).round();
     price = close[i];
   }
-  return OhlcvData(open: open, high: high, low: low, close: close, volume: volume);
+  return OhlcvData(
+      open: open, high: high, low: low, close: close, volume: volume);
 }
 
 String _signalTypeStr(SignalType t) {
   switch (t) {
-    case SignalType.buy: return 'BUY ';
-    case SignalType.sell: return 'SELL';
-    case SignalType.neutral: return 'NEUT';
+    case SignalType.buy:
+      return 'BUY ';
+    case SignalType.sell:
+      return 'SELL';
+    case SignalType.neutral:
+      return 'NEUT';
   }
 }
 
@@ -111,7 +115,13 @@ void main() {
     final subLow = data.low.sublist(0, bar + 1);
     final subOpen = data.open.sublist(0, bar + 1);
     final subVol = data.volume.sublist(0, bar + 1);
-    final subData = OhlcvData.subset(open: subOpen, high: subHigh, low: subLow, close: subClose, volume: subVol, length: bar + 1);
+    final subData = OhlcvData.subset(
+        open: subOpen,
+        high: subHigh,
+        low: subLow,
+        close: subClose,
+        volume: subVol,
+        length: bar + 1);
 
     // Run all indicators
     final rf = calcRangeFilter(subClose, 100, 3.0);
@@ -159,7 +169,8 @@ void main() {
 
     final idx = bar;
     void printInd(String name, bool long, bool short) {
-      print('  ${name.padRight(38)} LONG: ${long ? "\x1b[32m✔\x1b[0m" : "\x1b[31m✘\x1b[0m"}  SHORT: ${short ? "\x1b[31m✔\x1b[0m" : "\x1b[32m✘\x1b[0m"}');
+      print(
+          '  ${name.padRight(38)} LONG: ${long ? "\x1b[32m✔\x1b[0m" : "\x1b[31m✘\x1b[0m"}  SHORT: ${short ? "\x1b[31m✔\x1b[0m" : "\x1b[32m✘\x1b[0m"}');
     }
 
     printInd('Range Filter', rf.uprf[idx], rf.downrf[idx]);
@@ -172,7 +183,8 @@ void main() {
     printInd('MACD', macd.isLong[idx], macd.isShort[idx]);
     printInd('SSL Channel', ssl.isLong[idx], ssl.isShort[idx]);
     printInd('BBPT', bbpt.isLong[idx], bbpt.isShort[idx]);
-    printInd('Chandelier Exit', chandelier.isLong[idx], chandelier.isShort[idx]);
+    printInd(
+        'Chandelier Exit', chandelier.isLong[idx], chandelier.isShort[idx]);
     printInd('CCI', cci.isLong[idx], cci.isShort[idx]);
     printInd('DMI (ADX)', adx.isLong[idx], adx.isShort[idx]);
     printInd('Parabolic SAR', psar.isUp[idx], psar.isDown[idx]);
@@ -182,7 +194,8 @@ void main() {
     printInd('Wolfpack', wolf.isLong[idx], wolf.isShort[idx]);
     printInd('QQE Mod', qqe.isAbove[idx], qqe.isBelow[idx]);
     printInd('Hull Suite', hull.isUp[idx], hull.isDown[idx]);
-    printInd('Vortex Index', vortex.vipCondition[idx], vortex.vimCondition[idx]);
+    printInd(
+        'Vortex Index', vortex.vipCondition[idx], vortex.vimCondition[idx]);
     printInd('BB Oscillator', bbosc.isLong[idx], bbosc.isShort[idx]);
     printInd('Range Detector', rd.isLong[idx], rd.isShort[idx]);
     printInd('Trendline Breakout', tb.buySignal[idx], tb.sellSignal[idx]);
@@ -215,7 +228,8 @@ void main() {
     print('');
     print('\x1b[1m--- SIGNAL ---\x1b[0m');
     print('  Leading: ${config.leadingIndicator}');
-    print('  Signal:  \x1b[${signal == SignalType.buy ? "32" : signal == SignalType.sell ? "31" : "33"}m${_signalTypeStr(signal)}\x1b[0m');
+    print(
+        '  Signal:  \x1b[${signal == SignalType.buy ? "32" : signal == SignalType.sell ? "31" : "33"}m${_signalTypeStr(signal)}\x1b[0m');
     print('  Fresh:   ${isFresh ? "\x1b[32mYES\x1b[0m" : "\x1b[33mNO\x1b[0m"}');
 
     print('');
@@ -223,15 +237,22 @@ void main() {
     final start = math.max(0, signalHistory.length - 20);
     for (int i = start; i < signalHistory.length; i++) {
       final s = signalHistory[i];
-      final c = s == SignalType.buy ? "\x1b[32m" : s == SignalType.sell ? "\x1b[31m" : "\x1b[33m";
-      print('  $c${_signalTypeStr(s)}\x1b[0m  ${(i + 1).toString().padLeft(3)}');
+      final c = s == SignalType.buy
+          ? "\x1b[32m"
+          : s == SignalType.sell
+              ? "\x1b[31m"
+              : "\x1b[33m";
+      print(
+          '  $c${_signalTypeStr(s)}\x1b[0m  ${(i + 1).toString().padLeft(3)}');
     }
 
     // === Keyboard shortcuts ===
     print('');
     print('\x1b[2m──────────────────────────────────────\x1b[0m');
-    print('\x1b[1m[n]\x1b[0m next bar  \x1b[1m[p]\x1b[0m prev bar  \x1b[1m[P]\x1b[0m prev 10  \x1b[1m[N]\x1b[0m next 10');
-    print('\x1b[1m[r]\x1b[0m run to reversal data  \x1b[1m[f]\x1b[0m run to end  \x1b[1m[q]\x1b[0m quit');
+    print(
+        '\x1b[1m[n]\x1b[0m next bar  \x1b[1m[p]\x1b[0m prev bar  \x1b[1m[P]\x1b[0m prev 10  \x1b[1m[N]\x1b[0m next 10');
+    print(
+        '\x1b[1m[r]\x1b[0m run to reversal data  \x1b[1m[f]\x1b[0m run to end  \x1b[1m[q]\x1b[0m quit');
 
     // Input
     final input = stdin.readLineSync()?.toLowerCase() ?? '';

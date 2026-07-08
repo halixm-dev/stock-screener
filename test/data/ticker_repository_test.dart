@@ -1,393 +1,143 @@
-import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:http/http.dart' as http;
+import 'package:hive/hive.dart';
+import 'dart:convert';
 import 'package:stock_screener/data/ticker_repository.dart';
-import 'package:stock_screener/domain/ohlcv_data.dart';
+import 'package:stock_screener/data/cache_entry.dart';
 
-class MockTickerRepository extends Mock implements TickerRepository {}
-class MockClient extends Mock implements http.Client {}
+class MockHttpClient extends Mock implements http.Client {}
+
+class MockBox extends Mock implements Box {}
 
 void main() {
-  late MockTickerRepository mockRepo;
-  late TickerInfo ticker;
-  late List<TickerInfo> universe;
-  late OhlcvData ohlcv;
-
-  setUpAll(() {
-    registerFallbackValue(
-      OhlcvData(open: [], high: [], low: [], close: [], volume: []),
-    );
-    registerFallbackValue(TickerInfo(symbol: '', name: ''));
-    registerFallbackValue(<TickerInfo>[]);
-  });
+  late YahooFinanceTickerRepository repository;
+  late MockHttpClient mockHttpClient;
+  late MockBox mockBox;
 
   setUp(() {
-    mockRepo = MockTickerRepository();
-    ticker = TickerInfo(symbol: 'AAPL', name: 'Apple Inc.');
-    universe = [
-      ticker,
-      TickerInfo(symbol: 'GOOG', name: 'Alphabet Inc.'),
-      TickerInfo(symbol: 'MSFT', name: 'Microsoft Corporation'),
-    ];
-    ohlcv = OhlcvData(
-      open: [150.0, 151.0],
-      high: [155.0, 153.0],
-      low: [149.0, 150.0],
-      close: [154.0, 152.0],
-      volume: [100000, 120000],
+    mockHttpClient = MockHttpClient();
+    mockBox = MockBox();
+    repository = YahooFinanceTickerRepository(
+      client: mockHttpClient,
+      universeBox: mockBox,
     );
+
+    registerFallbackValue(Uri());
   });
 
-  group('TickerRepository (abstract interface)', () {
-    test('MockTickerRepository can be instantiated', () {
-      expect(mockRepo, isA<TickerRepository>());
-    });
+  group('fetchUniverse', () {
+    final mockTickers = ['BBCA.JK', 'BMRI.JK'];
+    final jsonResponse = jsonEncode(mockTickers);
 
-    group('fetchUniverse', () {
-      test('returns list of TickerInfo', () async {
-        when(() => mockRepo.fetchUniverse()).thenAnswer((_) async => universe);
-
-        final result = await mockRepo.fetchUniverse();
-
-        expect(result, same(universe));
-        expect(result, hasLength(3));
-        expect(result.first.symbol, 'AAPL');
-        expect(result.first.name, 'Apple Inc.');
-        verify(() => mockRepo.fetchUniverse()).called(1);
-      });
-
-      test('can return empty list', () async {
-        when(() => mockRepo.fetchUniverse()).thenAnswer((_) async => []);
-
-        final result = await mockRepo.fetchUniverse();
-
-        expect(result, isEmpty);
-      });
-    });
-
-    group('fetchOhlcv', () {
-      test('returns OhlcvData for a symbol', () async {
-        when(() => mockRepo.fetchOhlcv('AAPL')).thenAnswer((_) async => ohlcv);
-
-        final result = await mockRepo.fetchOhlcv('AAPL');
-
-        expect(result, same(ohlcv));
-        expect(result!.close.last, 152.0);
-        verify(() => mockRepo.fetchOhlcv('AAPL')).called(1);
-      });
-
-      test('can return null for unknown symbol', () async {
-        when(() => mockRepo.fetchOhlcv('UNKNOWN')).thenAnswer((_) async => null);
-
-        final result = await mockRepo.fetchOhlcv('UNKNOWN');
-
-        expect(result, isNull);
-      });
-
-      test('passes symbol argument correctly', () async {
-        when(() => mockRepo.fetchOhlcv(any())).thenAnswer((_) async => ohlcv);
-
-        await mockRepo.fetchOhlcv('TSLA');
-
-        verify(() => mockRepo.fetchOhlcv('TSLA')).called(1);
-      });
-    });
-
-    group('cacheOhlcv', () {
-      test('caches OhlcvData without error', () async {
-        when(() => mockRepo.cacheOhlcv(any(), any()))
-            .thenAnswer((_) async {});
-
-        await expectLater(
-          mockRepo.cacheOhlcv('AAPL', ohlcv),
-          completes,
-        );
-
-        verify(() => mockRepo.cacheOhlcv('AAPL', ohlcv)).called(1);
-      });
-
-      test('captures arguments correctly', () async {
-        when(() => mockRepo.cacheOhlcv(any(), any()))
-            .thenAnswer((_) async {});
-
-        await mockRepo.cacheOhlcv('MSFT', ohlcv);
-
-        final captured = verify(() => mockRepo.cacheOhlcv(captureAny(), captureAny()))
-            .captured;
-        expect(captured[0], 'MSFT');
-        expect(captured[1], same(ohlcv));
-      });
-    });
-
-    group('getCachedOhlcv', () {
-      test('returns cached OhlcvData', () async {
-        when(() => mockRepo.getCachedOhlcv('AAPL'))
-            .thenAnswer((_) async => ohlcv);
-
-        final result = await mockRepo.getCachedOhlcv('AAPL');
-
-        expect(result, same(ohlcv));
-        expect(result!.open.first, 150.0);
-        verify(() => mockRepo.getCachedOhlcv('AAPL')).called(1);
-      });
-
-      test('returns null when no cache', () async {
-        when(() => mockRepo.getCachedOhlcv('AAPL'))
-            .thenAnswer((_) async => null);
-
-        final result = await mockRepo.getCachedOhlcv('AAPL');
-
-        expect(result, isNull);
-      });
-    });
-
-    group('cacheUniverse', () {
-      test('caches universe without error', () async {
-        when(() => mockRepo.cacheUniverse(any())).thenAnswer((_) async {});
-
-        await expectLater(
-          mockRepo.cacheUniverse(universe),
-          completes,
-        );
-
-        verify(() => mockRepo.cacheUniverse(universe)).called(1);
-      });
-
-      test('captures ticker list argument', () async {
-        when(() => mockRepo.cacheUniverse(any())).thenAnswer((_) async {});
-
-        await mockRepo.cacheUniverse(universe);
-
-        final captured =
-            verify(() => mockRepo.cacheUniverse(captureAny())).captured;
-        expect(captured.first, isA<List<TickerInfo>>());
-        expect((captured.first as List<TickerInfo>), hasLength(3));
-      });
-    });
-
-    group('getCachedUniverse', () {
-      test('returns cached universe', () async {
-        when(() => mockRepo.getCachedUniverse())
-            .thenAnswer((_) async => universe);
-
-        final result = await mockRepo.getCachedUniverse();
-
-        expect(result, same(universe));
-        expect(result, hasLength(3));
-        verify(() => mockRepo.getCachedUniverse()).called(1);
-      });
-
-      test('returns null when no cached universe', () async {
-        when(() => mockRepo.getCachedUniverse())
-            .thenAnswer((_) async => null);
-
-        final result = await mockRepo.getCachedUniverse();
-
-        expect(result, isNull);
-      });
-    });
-
-    group('getLastCachedDate', () {
-      test('returns DateTime when cache exists', () async {
-        final date = DateTime(2026, 5, 25);
-        when(() => mockRepo.getLastCachedDate())
-            .thenAnswer((_) async => date);
-
-        final result = await mockRepo.getLastCachedDate();
-
-        expect(result, same(date));
-        expect(result!.year, 2026);
-        expect(result.month, 5);
-        expect(result.day, 25);
-        verify(() => mockRepo.getLastCachedDate()).called(1);
-      });
-
-      test('returns null when never cached', () async {
-        when(() => mockRepo.getLastCachedDate())
-            .thenAnswer((_) async => null);
-
-        final result = await mockRepo.getLastCachedDate();
-
-        expect(result, isNull);
-      });
-    });
-  });
-
-  group('YahooFinanceTickerRepository', () {
-    late YahooFinanceTickerRepository repo;
-    late MockClient mockClient;
-
-    setUp(() {
-      mockClient = MockClient();
-      repo = YahooFinanceTickerRepository(client: mockClient);
-    });
-
-    test('can be instantiated with defaults', () {
-      expect(repo.apiBase, 'https://query1.finance.yahoo.com/v8/finance/chart');
-      expect(repo.batchSize, 20);
-      expect(repo.throttleMs, 500);
-    });
-
-    test('can be instantiated with custom values', () {
-      final custom = YahooFinanceTickerRepository(
-        apiBase: 'https://custom.api',
-        batchSize: 10,
-        throttleMs: 1000,
+    test('returns cached data if valid and not expired', () async {
+      // Arrange
+      final entry = CacheEntry<List<String>>(
+        data: mockTickers,
+        createdAt: DateTime.now(),
       );
-      expect(custom.apiBase, 'https://custom.api');
-      expect(custom.batchSize, 10);
-      expect(custom.throttleMs, 1000);
+      when(() => mockBox.get('tickers')).thenReturn(entry.toMap());
+
+      // Act
+      final result = await repository.fetchUniverse();
+
+      // Assert
+      expect(result, equals(mockTickers));
+      verifyNever(() => mockHttpClient.get(any()));
     });
 
-    group('fetchOhlcv', () {
-      setUp(() {
-        registerFallbackValue(Uri.parse('http://localhost'));
-        repo = YahooFinanceTickerRepository(client: mockClient, throttleMs: 0);
-      });
+    test('fetches from network if cache is expired', () async {
+      // Arrange
+      final expiredEntry = CacheEntry<List<String>>(
+        data: ['OLD.JK'],
+        createdAt: DateTime.now().subtract(const Duration(days: 8)),
+      );
+      when(() => mockBox.get('tickers')).thenReturn(expiredEntry.toMap());
+      when(() => mockBox.delete('tickers')).thenAnswer((_) async {});
 
-      test('returns OhlcvData on successful response', () async {
-        final mockResponse = {
-          'chart': {
-            'result': [
-              {
-                'timestamp': [1000, 2000],
-                'indicators': {
-                  'quote': [
-                    {
-                      'open': [10.0, 11.0],
-                      'high': [12.0, 13.0],
-                      'low': [9.0, 10.0],
-                      'close': [11.0, 12.0],
-                      'volume': [100, 200],
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        };
+      when(
+        () => mockHttpClient.get(any()),
+      ).thenAnswer((_) async => http.Response(jsonResponse, 200));
+      when(() => mockBox.put('tickers', any())).thenAnswer((_) async {});
 
-        when(() => mockClient.get(any())).thenAnswer(
-          (_) async => http.Response(jsonEncode(mockResponse), 200),
-        );
+      // Act
+      final result = await repository.fetchUniverse();
 
-        final result = await repo.fetchOhlcv('AAPL');
-
-        expect(result, isNotNull);
-        expect(result!.open, [10.0, 11.0]);
-        expect(result.high, [12.0, 13.0]);
-        expect(result.low, [9.0, 10.0]);
-        expect(result.close, [11.0, 12.0]);
-        expect(result.volume, [100, 200]);
-
-        final captured = verify(() => mockClient.get(captureAny())).captured;
-        expect(
-          (captured.first as Uri).toString(),
-          'https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1d&range=1y',
-        );
-      });
-
-      test('filters out rows with null values', () async {
-        final mockResponse = {
-          'chart': {
-            'result': [
-              {
-                'timestamp': [1000, 2000, 3000],
-                'indicators': {
-                  'quote': [
-                    {
-                      'open': [10.0, null, 12.0],
-                      'high': [12.0, 13.0, 14.0],
-                      'low': [9.0, 10.0, 11.0],
-                      'close': [11.0, 12.0, 13.0],
-                      'volume': [100, 200, 300],
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        };
-
-        when(() => mockClient.get(any())).thenAnswer(
-          (_) async => http.Response(jsonEncode(mockResponse), 200),
-        );
-
-        final result = await repo.fetchOhlcv('AAPL');
-
-        expect(result, isNotNull);
-        expect(result!.open, [10.0, 12.0]); // middle row filtered out
-        expect(result.volume, [100, 300]);
-      });
-
-      test('returns null on non-200 status code', () async {
-        when(() => mockClient.get(any())).thenAnswer(
-          (_) async => http.Response('Error', 404),
-        );
-        final result = await repo.fetchOhlcv('AAPL');
-        expect(result, isNull);
-      });
-      
-      test('returns null on missing chart result', () async {
-        when(() => mockClient.get(any())).thenAnswer(
-          (_) async => http.Response(jsonEncode({'chart': null}), 200),
-        );
-        final result = await repo.fetchOhlcv('AAPL');
-        expect(result, isNull);
-      });
+      // Assert
+      expect(result, equals(mockTickers));
+      verify(() => mockBox.delete('tickers')).called(1);
+      verify(
+        () => mockHttpClient.get(
+          Uri.parse('https://halixm-dev.github.io/stock-screener/tickers.json'),
+        ),
+      ).called(1);
+      verify(() => mockBox.put('tickers', any())).called(1);
     });
 
-    group('throws UnimplementedError for other methods', () {
-      test('fetchUniverse', () async {
-        expect(
-          () => repo.fetchUniverse(),
-          throwsA(isA<UnimplementedError>()),
-        );
-      });
+    test('fetches from network if no cache exists', () async {
+      // Arrange
+      when(() => mockBox.get('tickers')).thenReturn(null);
+      when(
+        () => mockHttpClient.get(any()),
+      ).thenAnswer((_) async => http.Response(jsonResponse, 200));
+      when(() => mockBox.put('tickers', any())).thenAnswer((_) async {});
 
-      test('cacheOhlcv', () async {
-        final d = OhlcvData(
-          open: [150.0],
-          high: [155.0],
-          low: [149.0],
-          close: [154.0],
-          volume: [100000],
-        );
-        expect(
-          () => repo.cacheOhlcv('AAPL', d),
-          throwsA(isA<UnimplementedError>()),
-        );
-      });
+      // Act
+      final result = await repository.fetchUniverse();
 
-      test('getCachedOhlcv', () async {
-        expect(
-          () => repo.getCachedOhlcv('AAPL'),
-          throwsA(isA<UnimplementedError>()),
-        );
-      });
+      // Assert
+      expect(result, equals(mockTickers));
+      verify(
+        () => mockHttpClient.get(
+          Uri.parse('https://halixm-dev.github.io/stock-screener/tickers.json'),
+        ),
+      ).called(1);
+      verify(() => mockBox.put('tickers', any())).called(1);
+    });
 
-      test('cacheUniverse', () async {
-        final ts = [TickerInfo(symbol: 'AAPL', name: 'Apple Inc.')];
-        expect(
-          () => repo.cacheUniverse(ts),
-          throwsA(isA<UnimplementedError>()),
-        );
-      });
+    test('falls back to stale cache on network error', () async {
+      // Arrange
+      final expiredEntry = CacheEntry<List<String>>(
+        data: ['STALE.JK'],
+        createdAt: DateTime.now().subtract(const Duration(days: 8)),
+      );
 
-      test('getCachedUniverse', () async {
-        expect(
-          () => repo.getCachedUniverse(),
-          throwsA(isA<UnimplementedError>()),
-        );
+      var getCallCount = 0;
+      when(() => mockBox.get('tickers')).thenAnswer((_) {
+        getCallCount++;
+        return expiredEntry.toMap();
       });
+      when(() => mockBox.delete('tickers')).thenAnswer((_) async {});
 
-      test('getLastCachedDate', () async {
-        expect(
-          () => repo.getLastCachedDate(),
-          throwsA(isA<UnimplementedError>()),
-        );
-      });
+      when(
+        () => mockHttpClient.get(any()),
+      ).thenThrow(Exception('Network Error'));
+
+      // Act
+      final result = await repository.fetchUniverse();
+
+      // Assert
+      expect(result, equals(['STALE.JK']));
+      verify(() => mockBox.delete('tickers')).called(1);
+      verify(() => mockHttpClient.get(any())).called(1);
+    });
+
+    test('throws error if network fails and no stale cache exists', () async {
+      // Arrange
+      when(() => mockBox.get('tickers')).thenReturn(null);
+      when(
+        () => mockHttpClient.get(any()),
+      ).thenThrow(Exception('Network Error'));
+
+      // Act & Assert
+      try {
+        await repository.fetchUniverse();
+        fail('Should have thrown an exception');
+      } catch (e) {
+        expect(e, isA<Exception>());
+      }
+
+      verify(() => mockHttpClient.get(any())).called(1);
     });
   });
 }

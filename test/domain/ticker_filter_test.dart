@@ -2,7 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stock_screener/domain/ohlcv_data.dart';
 import 'package:stock_screener/domain/ticker_filter.dart';
 
-OhlcvData _validData({int bars = 150, double closePrice = 100, int lastVolume = 1000}) {
+OhlcvData _validData({
+  int bars = 150,
+  double closePrice = 100,
+  int lastVolume = 1000,
+}) {
   return OhlcvData(
     open: List.generate(bars, (_) => 99.0),
     high: List.generate(bars, (_) => 101.0),
@@ -44,10 +48,7 @@ void main() {
     test('returns true when lastTradeDate is null', () {
       const filter = TickerFilter();
       final data = _validData();
-      final result = filter.shouldKeep(
-        data: data,
-        lastTradeDate: null,
-      );
+      final result = filter.shouldKeep(data: data, lastTradeDate: null);
       expect(result, isTrue);
     });
 
@@ -101,15 +102,18 @@ void main() {
       expect(result, isFalse);
     });
 
-    test('returns true when lastTradeDate exactly at maxStaleDays boundary', () {
-      const filter = TickerFilter(maxStaleDays: 7);
-      final data = _validData();
-      final result = filter.shouldKeep(
-        data: data,
-        lastTradeDate: DateTime.now().subtract(const Duration(days: 7)),
-      );
-      expect(result, isTrue);
-    });
+    test(
+      'returns true when lastTradeDate exactly at maxStaleDays boundary',
+      () {
+        const filter = TickerFilter(maxStaleDays: 7);
+        final data = _validData();
+        final result = filter.shouldKeep(
+          data: data,
+          lastTradeDate: DateTime.now().subtract(const Duration(days: 7)),
+        );
+        expect(result, isTrue);
+      },
+    );
 
     test('returns false when lastTradeDate one day past maxStaleDays', () {
       const filter = TickerFilter(maxStaleDays: 7);

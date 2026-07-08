@@ -28,12 +28,12 @@ class OhlcvData {
     List<double>? low,
     List<double>? close,
     List<int>? volume,
-  })  : open = open ?? [],
-        high = high ?? [],
-        low = low ?? [],
-        close = close ?? [],
-        volume = volume ?? [],
-        length = (open ?? []).length;
+  }) : open = open ?? [],
+       high = high ?? [],
+       low = low ?? [],
+       close = close ?? [],
+       volume = volume ?? [],
+       length = (open ?? []).length;
 
   const OhlcvData.subset({
     required this.open,
@@ -63,17 +63,9 @@ class IndicatorResult {
   final bool isShort;
   final double? value;
 
-  const IndicatorResult({required this.isLong, required this.isShort, this.value});
-}
-
-class ScreenSignalConfig {
-  String leadingIndicator;
-  int signalExpiry;
-  bool alternateSignal;
-
-  ScreenSignalConfig({
-    this.leadingIndicator = 'Range Filter',
-    this.signalExpiry = 3,
-    this.alternateSignal = true,
+  const IndicatorResult({
+    required this.isLong,
+    required this.isShort,
+    this.value,
   });
 }

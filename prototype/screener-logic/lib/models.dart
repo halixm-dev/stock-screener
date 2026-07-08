@@ -63,7 +63,8 @@ class IndicatorResult {
   final bool isShort;
   final double? value;
 
-  const IndicatorResult({required this.isLong, required this.isShort, this.value});
+  const IndicatorResult(
+      {required this.isLong, required this.isShort, this.value});
 }
 
 class ScreenSignalConfig {

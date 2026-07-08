@@ -28,10 +28,7 @@ class TickerFilter {
     this.minPrice = 50,
   });
 
-  bool shouldKeep({
-    required OhlcvData data,
-    required DateTime? lastTradeDate,
-  }) {
+  bool shouldKeep({required OhlcvData data, required DateTime? lastTradeDate}) {
     if (data.length < minBars) return false;
     if (data.volume.last == 0) return false;
     if (data.close.last < minPrice) return false;
