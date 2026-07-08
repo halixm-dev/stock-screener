@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:stock_screener/data/models/screener_result.dart';
 
@@ -10,6 +11,8 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
+    if (kIsWeb) return;
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -35,6 +38,8 @@ class NotificationService {
   }
 
   Future<void> requestPermissions() async {
+    if (kIsWeb) return;
+
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
@@ -49,6 +54,7 @@ class NotificationService {
   }
 
   Future<void> showGroupedNotification(List<ScreenResult> freshSignals) async {
+    if (kIsWeb) return;
     if (freshSignals.isEmpty) return;
 
     final String title = '${freshSignals.length} New Fresh Signals Detected';

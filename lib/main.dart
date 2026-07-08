@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -18,7 +19,9 @@ import 'ui/results_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  Workmanager().initialize(callbackDispatcher);
+  if (!kIsWeb) {
+    Workmanager().initialize(callbackDispatcher);
+  }
 
   // Initialize Hive
   await Hive.initFlutter();

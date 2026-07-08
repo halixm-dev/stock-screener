@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -52,6 +53,14 @@ class ConfigScreen extends StatelessWidget {
               ),
               value: state.isBackgroundScanEnabled,
               onChanged: (val) async {
+                if (kIsWeb && val) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Background scans are not supported on the web.'),
+                    ),
+                  );
+                  return;
+                }
                 context.read<ConfigCubit>().setBackgroundScanEnabled(val);
                 if (val) {
                   // Request permissions
@@ -60,13 +69,17 @@ class ConfigScreen extends StatelessWidget {
                   await notif.requestPermissions();
 
                   // Register task
-                  Workmanager().registerPeriodicTask(
-                    "1",
-                    "backgroundScreenerTask",
-                    frequency: const Duration(hours: 1),
-                  );
+                  if (!kIsWeb) {
+                    Workmanager().registerPeriodicTask(
+                      "1",
+                      "backgroundScreenerTask",
+                      frequency: const Duration(hours: 1),
+                    );
+                  }
                 } else {
-                  Workmanager().cancelAll();
+                  if (!kIsWeb) {
+                    Workmanager().cancelAll();
+                  }
                 }
               },
             ),
