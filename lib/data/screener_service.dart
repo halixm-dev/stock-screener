@@ -47,8 +47,9 @@ class ScreenerService {
             }
 
             final allSignals = signalEngine.evaluateAll(data: data);
-            final signal =
-                allSignals.isNotEmpty ? allSignals.last : SignalType.neutral;
+            final signal = allSignals.isNotEmpty
+                ? allSignals.last
+                : SignalType.neutral;
 
             if (signal != SignalType.neutral) {
               final freshResult = signalEngine.isFreshSignal(
