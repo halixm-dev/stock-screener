@@ -20,48 +20,66 @@ class ScreenerService {
     required this.resultsBox,
   });
 
-  Future<List<ScreenResult>> runScan({required List<String> symbols}) async {
+  Future<List<ScreenResult>> runScan({
+    required List<String> symbols,
+    void Function(int completed, int total)? onProgress,
+  }) async {
     final results = <ScreenResult>[];
+    await resultsBox.clear();
 
     // Read the latest config
     final config = await configRepository.getConfig();
     final signalEngine = SignalEngine(config: config);
 
-    for (final symbol in symbols) {
-      try {
-        final data = await _fetchWithCache(symbol);
-        if (data == null ||
-            !filter.shouldKeep(data: data, lastTradeDate: null)) {
-          continue;
-        }
+    int completed = 0;
+    const batchSize = 20;
 
-        final allSignals = signalEngine.evaluateAll(data: data);
-        final signal = allSignals.isNotEmpty
-            ? allSignals.last
-            : SignalType.neutral;
+    for (var i = 0; i < symbols.length; i += batchSize) {
+      final batch = symbols.skip(i).take(batchSize).toList();
 
-        if (signal != SignalType.neutral) {
-          final freshResult = signalEngine.isFreshSignal(allSignals, signal);
-          results.add(
-            ScreenResult(
-              symbol: symbol,
-              signal: signal.toHive(),
-              price: data.close.last,
-              changePercent: _changePercent(data),
-              timestamp: DateTime.now(),
-              freshResult: freshResult.toHive(),
-            ),
-          );
-        }
-      } catch (e) {
-        // Silently drop and continue on fetch failure
-        print('Error fetching data for $symbol: $e');
+      await Future.wait(
+        batch.map((symbol) async {
+          try {
+            final data = await _fetchWithCache(symbol);
+            if (data == null ||
+                !filter.shouldKeep(data: data, lastTradeDate: null)) {
+              return;
+            }
+
+            final allSignals = signalEngine.evaluateAll(data: data);
+            final signal =
+                allSignals.isNotEmpty ? allSignals.last : SignalType.neutral;
+
+            if (signal != SignalType.neutral) {
+              final freshResult = signalEngine.isFreshSignal(
+                allSignals,
+                signal,
+              );
+              final result = ScreenResult(
+                symbol: symbol,
+                signal: signal.toHive(),
+                price: data.close.last,
+                changePercent: _changePercent(data),
+                timestamp: DateTime.now(),
+                freshResult: freshResult.toHive(),
+              );
+              results.add(result);
+              await resultsBox.add(result);
+            }
+          } catch (e) {
+            // Silently drop and continue on fetch failure
+            print('Error fetching data for $symbol: $e');
+          } finally {
+            completed++;
+            onProgress?.call(completed, symbols.length);
+          }
+        }),
+      );
+
+      if (i + batchSize < symbols.length) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
       }
     }
-
-    // Clear old results and save new ones
-    await resultsBox.clear();
-    await resultsBox.addAll(results);
 
     return results;
   }

@@ -11,7 +11,13 @@ class ScreenerInitial extends ScreenerState {
 }
 
 class ScreenerScanning extends ScreenerState {
-  const ScreenerScanning();
+  final int completed;
+  final int total;
+
+  const ScreenerScanning({this.completed = 0, this.total = 0});
+
+  @override
+  List<Object?> get props => [completed, total];
 }
 
 class ScreenerError extends ScreenerState {

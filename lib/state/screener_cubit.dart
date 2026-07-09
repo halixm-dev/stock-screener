@@ -11,9 +11,14 @@ class ScreenerCubit extends Cubit<ScreenerState> {
     : super(const ScreenerInitial());
 
   Future<void> runScan({required List<String> symbols}) async {
-    emit(const ScreenerScanning());
+    emit(ScreenerScanning(completed: 0, total: symbols.length));
     try {
-      await screenerService.runScan(symbols: symbols);
+      await screenerService.runScan(
+        symbols: symbols,
+        onProgress: (completed, total) {
+          emit(ScreenerScanning(completed: completed, total: total));
+        },
+      );
       emit(const ScreenerInitial());
     } catch (e) {
       emit(ScreenerError(e.toString()));

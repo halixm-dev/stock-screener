@@ -21,7 +21,7 @@ class ResultsScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ConfigScreen()),
+                MaterialPageRoute<void>(builder: (_) => const ConfigScreen()),
               );
             },
           ),
@@ -29,19 +29,6 @@ class ResultsScreen extends StatelessWidget {
       ),
       body: BlocBuilder<ScreenerCubit, ScreenerState>(
         builder: (context, state) {
-          if (state is ScreenerScanning) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Scanning universe...'),
-                ],
-              ),
-            );
-          }
-
           if (state is ScreenerError) {
             return Center(
               child: Text(
@@ -52,57 +39,82 @@ class ResultsScreen extends StatelessWidget {
           }
 
           // Use ValueListenableBuilder to reactively update when Hive changes
-          return ValueListenableBuilder(
-            valueListenable: resultsBox.listenable(),
-            builder: (context, Box<ScreenResult> box, _) {
-              if (box.isEmpty) {
-                return const Center(
-                  child: Text('No results yet. Tap Scan to begin.'),
-                );
-              }
+          return Column(
+            children: [
+              if (state is ScreenerScanning)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      if (state.total > 0)
+                        LinearProgressIndicator(
+                          value: state.completed / state.total,
+                        )
+                      else
+                        const LinearProgressIndicator(),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Scanning universe... (${state.completed}/${state.total})',
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: ValueListenableBuilder(
 
-              final results = box.values.toList();
-              // Sort by change percent descending
-              results.sort(
-                (a, b) => b.changePercent.compareTo(a.changePercent),
-              );
+                  valueListenable: resultsBox.listenable(),
+                  builder: (context, Box<ScreenResult> box, _) {
+                    if (box.isEmpty) {
+                      return const Center(
+                        child: Text('No results yet. Tap Scan to begin.'),
+                      );
+                    }
 
-              return ListView.builder(
-                itemCount: results.length,
-                itemBuilder: (context, index) {
-                  final result = results[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        result.symbol,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        'Change: ${result.changePercent.toStringAsFixed(2)}%',
-                        style: TextStyle(
-                          color: result.changePercent >= 0
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _buildSignalBadge(result.signal),
-                          const SizedBox(height: 4),
-                          _buildFreshnessBadge(result.freshResult),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+                    final results = box.values.toList();
+                    // Sort by change percent descending
+                    results.sort(
+                      (a, b) => b.changePercent.compareTo(a.changePercent),
+                    );
+
+                    return ListView.builder(
+                      itemCount: results.length,
+                      itemBuilder: (context, index) {
+                        final result = results[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              result.symbol,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              'Change: ${result.changePercent.toStringAsFixed(2)}%',
+                              style: TextStyle(
+                                color: result.changePercent >= 0
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                _buildSignalBadge(result.signal),
+                                const SizedBox(height: 4),
+                                _buildFreshnessBadge(result.freshResult),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

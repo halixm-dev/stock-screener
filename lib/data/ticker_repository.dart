@@ -22,8 +22,6 @@ class YahooFinanceTickerRepository implements TickerRepository {
   final http.Client _client;
   final Box? universeBox;
 
-  Future<void> _throttleQueue = Future.value();
-
   YahooFinanceTickerRepository({
     this.apiBase = 'https://query1.finance.yahoo.com/v8/finance/chart',
     this.batchSize = 20,
@@ -31,21 +29,6 @@ class YahooFinanceTickerRepository implements TickerRepository {
     http.Client? client,
     this.universeBox,
   }) : _client = client ?? http.Client();
-
-  Future<T> _enqueue<T>(Future<T> Function() action) {
-    final completer = Completer<T>();
-    final next = _throttleQueue.then((_) async {
-      try {
-        final result = await action();
-        completer.complete(result);
-      } catch (e, st) {
-        completer.completeError(e, st);
-      }
-      await Future.delayed(Duration(milliseconds: throttleMs));
-    });
-    _throttleQueue = next.catchError((_) {}).then((_) => null);
-    return completer.future;
-  }
 
   @override
   Future<List<String>> fetchUniverse() async {
@@ -90,7 +73,7 @@ class YahooFinanceTickerRepository implements TickerRepository {
 
   @override
   Future<OhlcvData?> fetchOhlcv(String symbol) async {
-    return _enqueue(() async {
+    try {
       final url = Uri.parse('$apiBase/$symbol?interval=1d&range=1y');
       final response = await _client.get(url);
 
@@ -167,7 +150,9 @@ class YahooFinanceTickerRepository implements TickerRepository {
         close: close,
         volume: volume,
       );
-    });
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
