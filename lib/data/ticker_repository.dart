@@ -21,6 +21,7 @@ class YahooFinanceTickerRepository implements TickerRepository {
   final int throttleMs;
   final http.Client _client;
   final Box? universeBox;
+  final Box? ohlcvBox;
 
   YahooFinanceTickerRepository({
     this.apiBase = 'https://query1.finance.yahoo.com/v8/finance/chart',
@@ -28,6 +29,7 @@ class YahooFinanceTickerRepository implements TickerRepository {
     this.throttleMs = 500,
     http.Client? client,
     this.universeBox,
+    this.ohlcvBox,
   }) : _client = client ?? http.Client();
 
   @override
@@ -143,13 +145,16 @@ class YahooFinanceTickerRepository implements TickerRepository {
 
       if (open.isEmpty) return null;
 
-      return OhlcvData(
+      final ohlcv = OhlcvData(
         open: open,
         high: high,
         low: low,
         close: close,
         volume: volume,
       );
+
+      await cacheOhlcv(symbol, ohlcv);
+      return ohlcv;
     } catch (e) {
       return null;
     }
@@ -157,12 +162,58 @@ class YahooFinanceTickerRepository implements TickerRepository {
 
   @override
   Future<void> cacheOhlcv(String symbol, OhlcvData data) async {
-    throw UnimplementedError('cacheOhlcv not yet wired to Hive');
+    if (ohlcvBox == null) return;
+
+    final mapData = {
+      'open': data.open,
+      'high': data.high,
+      'low': data.low,
+      'close': data.close,
+      'volume': data.volume,
+    };
+
+    final entry = CacheEntry<Map<String, dynamic>>(
+      data: mapData,
+      createdAt: DateTime.now(),
+    );
+    await ohlcvBox!.put(symbol, entry.toMap());
   }
 
   @override
   Future<OhlcvData?> getCachedOhlcv(String symbol) async {
-    throw UnimplementedError('getCachedOhlcv not yet wired to Hive');
+    if (ohlcvBox == null) return null;
+
+    final map = ohlcvBox!.get(symbol);
+    if (map == null) return null;
+
+    try {
+      final Map<dynamic, dynamic> dynamicMap = map is Map
+          ? map
+          : Map<dynamic, dynamic>.from(map as Map);
+
+      final entry = CacheEntry<Map<String, dynamic>>.fromMap(
+        dynamicMap,
+        (data) => Map<String, dynamic>.from(data as Map),
+      );
+
+      // 24 hour TTL for OHLCV data
+      if (entry.isExpired(const Duration(hours: 24))) {
+        await ohlcvBox!.delete(symbol);
+        return null;
+      }
+
+      final d = entry.data;
+      return OhlcvData(
+        open: (d['open'] as List).cast<double>(),
+        high: (d['high'] as List).cast<double>(),
+        low: (d['low'] as List).cast<double>(),
+        close: (d['close'] as List).cast<double>(),
+        volume: (d['volume'] as List).cast<int>(),
+      );
+    } catch (e) {
+      print('Warning: Failed to parse cached OHLCV for $symbol. Error: $e');
+      return null;
+    }
   }
 
   @override

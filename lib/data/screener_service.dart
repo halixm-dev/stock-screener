@@ -69,7 +69,11 @@ class ScreenerService {
             }
           } catch (e) {
             // Silently drop and continue on fetch failure
-            print('Error fetching data for $symbol: $e');
+            // Only print if not a Web CORS ClientException to avoid console flood
+            final errorStr = e.toString();
+            if (!errorStr.contains('XMLHttpRequest error')) {
+              print('Error fetching data for $symbol: $e');
+            }
           } finally {
             completed++;
             onProgress?.call(completed, symbols.length);

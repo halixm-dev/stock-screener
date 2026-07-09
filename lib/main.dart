@@ -32,13 +32,14 @@ void main() async {
 
   // Open boxes
   final resultsBox = await Hive.openBox<ScreenResult>('results_box');
+  final ohlcvBox = await Hive.openBox<dynamic>('ohlcv_box');
   await Hive.openBox<bool>('dedup_box');
 
   // Setup SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
   // Setup Dependencies
-  final tickerRepository = YahooFinanceTickerRepository();
+  final tickerRepository = YahooFinanceTickerRepository(ohlcvBox: ohlcvBox);
   final tickerFilter = TickerFilter();
   final configRepository = ConfigRepository(prefs);
 
