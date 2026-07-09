@@ -147,7 +147,10 @@ class ConfigScreen extends StatelessWidget {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Leading Indicator'),
-              initialValue: config.leadingIndicator,
+              initialValue:
+                  indicatorRegistry.keys.contains(config.leadingIndicator)
+                  ? config.leadingIndicator
+                  : 'Range Filter',
               items: indicatorRegistry.keys.map((key) {
                 return DropdownMenuItem(value: key, child: Text(key));
               }).toList(),
@@ -287,7 +290,8 @@ class ConfigScreen extends StatelessWidget {
 
     return switch (paramDef) {
       IntParam p => (() {
-        final val = (currentValue as num?)?.toInt() ?? p.defaultValue;
+        int val = (currentValue as num?)?.toInt() ?? p.defaultValue;
+        val = val.clamp(p.min, p.max);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -303,7 +307,8 @@ class ConfigScreen extends StatelessWidget {
         );
       })(),
       DoubleParam p => (() {
-        final val = (currentValue as num?)?.toDouble() ?? p.defaultValue;
+        double val = (currentValue as num?)?.toDouble() ?? p.defaultValue;
+        val = val.clamp(p.min, p.max);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -319,7 +324,9 @@ class ConfigScreen extends StatelessWidget {
       ),
       ChoiceParam p => DropdownButtonFormField<String>(
         decoration: InputDecoration(labelText: p.label),
-        initialValue: (currentValue as String?) ?? p.defaultValue,
+        initialValue: p.options.contains(currentValue)
+            ? (currentValue as String)
+            : p.defaultValue,
         items: p.options
             .map((opt) => DropdownMenuItem(value: opt, child: Text(opt)))
             .toList(),
