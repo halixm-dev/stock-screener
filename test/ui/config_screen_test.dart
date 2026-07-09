@@ -1,0 +1,29 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:stock_screener/ui/config/config_screen.dart';
+import 'package:stock_screener/state/config_cubit.dart';
+import 'package:stock_screener/data/config_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+void main() {
+  testWidgets('ConfigScreen rendering test', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final repo = ConfigRepository(prefs);
+    final cubit = ConfigCubit(repo);
+    await cubit.loadConfig();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider.value(
+          value: cubit,
+          child: const ConfigScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.byType(ConfigScreen), findsOneWidget);
+  });
+}
