@@ -1,0 +1,42 @@
+name: Update IDX Tickers
+
+on:
+  schedule:
+    # Run on the 1st and 15th of every month at 06:00 UTC (13:00 WIB)
+    - cron: '0 6 1,15 * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  update-tickers:
+    name: Fetch & Update Tickers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Run update script
+        run: dart run tools/update_tickers.dart
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet assets/tickers.json && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit & push
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          TICKER_COUNT=$(dart -e "import 'dart:convert'; import 'dart:io'; void main() { print((jsonDecode(File('assets/tickers.json').readAsStringSync()) as List).length); }")
+          
+          git add assets/tickers.json web/tickers.json
+          git commit -m "chore(data): update IDX ticker universe to ${TICKER_COUNT} stocks"
+          git push
