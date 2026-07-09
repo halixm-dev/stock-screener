@@ -15,10 +15,10 @@ trigger: always_on
 * **Layers:** Presentation (Widgets), Domain (Logic/Notifiers), Data (Repo/API).
 * **Features:** Group by feature (e.g., `lib/features/login/`) for scalable apps.
 * **SOLID:** Strictly enforced.
-* **State Management (Riverpod 3.x):**
-  * **App State:** Use `Riverpod` with code generation (`@riverpod`, `Notifier`, `AsyncNotifier`) for ALL dependency injection and app state.
+* **State Management (Bloc / Cubit):**
+  * **App State:** Use `flutter_bloc` with `Bloc` or `Cubit` for ALL dependency injection and app state.
   * **Local State:** Use built-in `ValueNotifier` ONLY for simple, local ephemeral UI state.
-  * **Providers:** Place Riverpod providers in `lib/presentation/providers/`.
+  * **Blocs/Cubits:** Place Blocs/Cubits in feature-specific directories or a dedicated logic layer.
 
 ## Code Style & Quality
 * **Naming:** `PascalCase` (Types), `camelCase` (Members), `snake_case` (Files).
