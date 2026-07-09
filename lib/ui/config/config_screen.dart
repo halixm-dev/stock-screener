@@ -175,7 +175,7 @@ class ConfigScreen extends StatelessWidget {
               spacing: 8.0,
               runSpacing: 8.0,
               children: indicatorRegistry.keys
-                  .where((k) => k != config.leadingIndicator)
+                  .where((k) => k != (indicatorRegistry.keys.contains(config.leadingIndicator) ? config.leadingIndicator : 'Range Filter'))
                   .map((key) {
                     final isSelected = config.confirmations.contains(key);
                     return FilterChip(
@@ -208,7 +208,13 @@ class ConfigScreen extends StatelessWidget {
     BuildContext context,
     ScreenSignalConfig config,
   ) {
-    final activeIndicators = [config.leadingIndicator, ...config.confirmations];
+    final validLeading = indicatorRegistry.keys.contains(config.leadingIndicator)
+        ? config.leadingIndicator
+        : 'Range Filter';
+    final validConfirmations = config.confirmations
+        .where((c) => indicatorRegistry.keys.contains(c))
+        .toList();
+    final activeIndicators = [validLeading, ...validConfirmations];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
