@@ -242,33 +242,37 @@ class ConfigScreen extends StatelessWidget {
     }
 
     return switch (paramDef) {
-      IntParam p => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('${p.label}: ${(currentValue as int?) ?? p.defaultValue}'),
-          Slider(
-            value: (currentValue ?? p.defaultValue).toDouble(),
-            min: p.min.toDouble(),
-            max: p.max.toDouble(),
-            divisions: p.max > p.min ? p.max - p.min : 1,
-            onChanged: (val) => updateValue(val.round()),
-          ),
-        ],
-      ),
-      DoubleParam p => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${p.label}: ${((currentValue as double?) ?? p.defaultValue).toStringAsFixed(2)}',
-          ),
-          Slider(
-            value: currentValue ?? p.defaultValue,
-            min: p.min,
-            max: p.max,
-            onChanged: updateValue,
-          ),
-        ],
-      ),
+      IntParam p => (() {
+        final val = (currentValue as num?)?.toInt() ?? p.defaultValue;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${p.label}: $val'),
+            Slider(
+              value: val.toDouble(),
+              min: p.min.toDouble(),
+              max: p.max.toDouble(),
+              divisions: p.max > p.min ? p.max - p.min : 1,
+              onChanged: (newVal) => updateValue(newVal.round()),
+            ),
+          ],
+        );
+      })(),
+      DoubleParam p => (() {
+        final val = (currentValue as num?)?.toDouble() ?? p.defaultValue;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${p.label}: ${val.toStringAsFixed(2)}'),
+            Slider(
+              value: val,
+              min: p.min,
+              max: p.max,
+              onChanged: updateValue,
+            ),
+          ],
+        );
+      })(),
       BoolParam p => SwitchListTile(
         title: Text(p.label),
         value: (currentValue as bool?) ?? p.defaultValue,
