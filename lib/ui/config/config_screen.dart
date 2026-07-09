@@ -24,6 +24,8 @@ class ConfigScreen extends StatelessWidget {
             children: [
               _buildGeneralSettingsSection(context, state),
               const SizedBox(height: 24),
+              _buildUniverseSection(context, config),
+              const SizedBox(height: 24),
               _buildRoutingSection(context, config),
               const SizedBox(height: 24),
               _buildParametersSection(context, config),
@@ -56,7 +58,9 @@ class ConfigScreen extends StatelessWidget {
                 if (kIsWeb && val) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Background scans are not supported on the web.'),
+                      content: Text(
+                        'Background scans are not supported on the web.',
+                      ),
                     ),
                   );
                   return;
@@ -81,6 +85,46 @@ class ConfigScreen extends StatelessWidget {
                     Workmanager().cancelAll();
                   }
                 }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUniverseSection(
+    BuildContext context,
+    ScreenSignalConfig config,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Stock Universe',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              initialValue: config.universe.join(', '),
+              decoration: const InputDecoration(
+                labelText: 'Tickers (comma separated)',
+                hintText: 'e.g. BBCA.JK, GOTO.JK',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              onChanged: (val) {
+                final symbols = val
+                    .split(',')
+                    .map((s) => s.trim().toUpperCase())
+                    .where((s) => s.isNotEmpty)
+                    .toList();
+                context.read<ConfigCubit>().updateConfig(
+                  config.copyWith(universe: symbols),
+                );
               },
             ),
           ],
@@ -264,12 +308,7 @@ class ConfigScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('${p.label}: ${val.toStringAsFixed(2)}'),
-            Slider(
-              value: val,
-              min: p.min,
-              max: p.max,
-              onChanged: updateValue,
-            ),
+            Slider(value: val, min: p.min, max: p.max, onChanged: updateValue),
           ],
         );
       })(),

@@ -4,11 +4,19 @@ class ScreenSignalConfig extends Equatable {
   final String leadingIndicator;
   final List<String> confirmations;
   final Map<String, Map<String, dynamic>> parameters;
+  final List<String> universe;
 
   const ScreenSignalConfig({
     this.leadingIndicator = 'Range Filter',
     this.confirmations = const [],
     this.parameters = const {},
+    this.universe = const [
+      'BBCA.JK',
+      'GOTO.JK',
+      'TLKM.JK',
+      'BUMI.JK',
+      'AMMN.JK',
+    ],
   });
 
   factory ScreenSignalConfig.fromJson(Map<String, dynamic> json) {
@@ -21,6 +29,9 @@ class ScreenSignalConfig extends Equatable {
             (k, e) => MapEntry(k, Map<String, dynamic>.from(e as Map)),
           ) ??
           const {},
+      universe:
+          (json['universe'] as List<dynamic>?)?.cast<String>() ??
+          const ['BBCA.JK', 'GOTO.JK', 'TLKM.JK', 'BUMI.JK', 'AMMN.JK'],
     );
   }
 
@@ -29,6 +40,7 @@ class ScreenSignalConfig extends Equatable {
       'leadingIndicator': leadingIndicator,
       'confirmations': confirmations,
       'parameters': parameters,
+      'universe': universe,
     };
   }
 
@@ -36,14 +48,21 @@ class ScreenSignalConfig extends Equatable {
     String? leadingIndicator,
     List<String>? confirmations,
     Map<String, Map<String, dynamic>>? parameters,
+    List<String>? universe,
   }) {
     return ScreenSignalConfig(
       leadingIndicator: leadingIndicator ?? this.leadingIndicator,
       confirmations: confirmations ?? this.confirmations,
       parameters: parameters ?? this.parameters,
+      universe: universe ?? this.universe,
     );
   }
 
   @override
-  List<Object?> get props => [leadingIndicator, confirmations, parameters];
+  List<Object?> get props => [
+    leadingIndicator,
+    confirmations,
+    parameters,
+    universe,
+  ];
 }

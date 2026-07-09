@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../data/models/screener_result.dart';
 import '../state/screener_cubit.dart';
+import '../state/config_cubit.dart';
 import 'config/config_screen.dart';
 
 class ResultsScreen extends StatelessWidget {
@@ -61,7 +62,6 @@ class ResultsScreen extends StatelessWidget {
                 ),
               Expanded(
                 child: ValueListenableBuilder(
-
                   valueListenable: resultsBox.listenable(),
                   builder: (context, Box<ScreenResult> box, _) {
                     if (box.isEmpty) {
@@ -88,7 +88,9 @@ class ResultsScreen extends StatelessWidget {
                           child: ListTile(
                             title: Text(
                               result.symbol,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             subtitle: Text(
                               'Change: ${result.changePercent.toStringAsFixed(2)}%',
@@ -120,16 +122,9 @@ class ResultsScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
+          final config = context.read<ConfigCubit>().state.config;
           // Trigger a scan
-          context.read<ScreenerCubit>().runScan(
-            symbols: [
-              'BBCA.JK',
-              'GOTO.JK',
-              'TLKM.JK',
-              'BUMI.JK',
-              'AMMN.JK',
-            ], // Dummy universe for now
-          );
+          context.read<ScreenerCubit>().runScan(symbols: config.universe);
         },
         label: const Text('Scan Now'),
         icon: const Icon(Icons.search),
