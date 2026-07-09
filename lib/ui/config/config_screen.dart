@@ -112,7 +112,7 @@ class ConfigScreen extends StatelessWidget {
               initialValue: config.universe.join(', '),
               decoration: const InputDecoration(
                 labelText: 'Tickers (comma separated)',
-                hintText: 'e.g. BBCA.JK, GOTO.JK',
+                hintText: 'Leave empty to scan all IDX stocks',
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,

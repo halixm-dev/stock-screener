@@ -27,6 +27,11 @@ class ScreenerService {
     final results = <ScreenResult>[];
     await resultsBox.clear();
 
+    List<String> scanSymbols = symbols;
+    if (scanSymbols.isEmpty) {
+      scanSymbols = await repository.fetchUniverse();
+    }
+
     // Read the latest config
     final config = await configRepository.getConfig();
     final signalEngine = SignalEngine(config: config);
@@ -34,8 +39,8 @@ class ScreenerService {
     int completed = 0;
     const batchSize = 20;
 
-    for (var i = 0; i < symbols.length; i += batchSize) {
-      final batch = symbols.skip(i).take(batchSize).toList();
+    for (var i = 0; i < scanSymbols.length; i += batchSize) {
+      final batch = scanSymbols.skip(i).take(batchSize).toList();
 
       await Future.wait(
         batch.map((symbol) async {
@@ -76,12 +81,12 @@ class ScreenerService {
             }
           } finally {
             completed++;
-            onProgress?.call(completed, symbols.length);
+            onProgress?.call(completed, scanSymbols.length);
           }
         }),
       );
 
-      if (i + batchSize < symbols.length) {
+      if (i + batchSize < scanSymbols.length) {
         await Future<void>.delayed(const Duration(milliseconds: 500));
       }
     }

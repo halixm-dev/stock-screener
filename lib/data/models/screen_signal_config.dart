@@ -10,13 +10,7 @@ class ScreenSignalConfig extends Equatable {
     this.leadingIndicator = 'Range Filter',
     this.confirmations = const [],
     this.parameters = const {},
-    this.universe = const [
-      'BBCA.JK',
-      'GOTO.JK',
-      'TLKM.JK',
-      'BUMI.JK',
-      'AMMN.JK',
-    ],
+    this.universe = const [],
   });
 
   factory ScreenSignalConfig.fromJson(Map<String, dynamic> json) {
@@ -31,7 +25,7 @@ class ScreenSignalConfig extends Equatable {
           const {},
       universe:
           (json['universe'] as List<dynamic>?)?.cast<String>() ??
-          const ['BBCA.JK', 'GOTO.JK', 'TLKM.JK', 'BUMI.JK', 'AMMN.JK'],
+          const [],
     );
   }
 

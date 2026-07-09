@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:hive/hive.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import '../domain/ohlcv_data.dart';
 import 'cache_entry.dart';
 
@@ -68,8 +69,18 @@ class YahooFinanceTickerRepository implements TickerRepository {
         );
         return stale;
       }
-      // If no stale cache exists, rethrow
-      rethrow;
+      
+      // 5. If no cache, try loading the local bundled fallback
+      print('Warning: No network or cache available, loading bundled fallback universe.');
+      try {
+        final String jsonString = await rootBundle.loadString('assets/tickers.json');
+        final List<dynamic> jsonList = jsonDecode(jsonString) as List<dynamic>;
+        return jsonList.cast<String>();
+      } catch (assetError) {
+        print('Error loading bundled fallback: $assetError');
+        // If all else fails, rethrow original error
+        rethrow;
+      }
     }
   }
 
