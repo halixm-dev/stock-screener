@@ -87,8 +87,9 @@ class YahooFinanceTickerRepository implements TickerRepository {
   @override
   Future<OhlcvData?> fetchOhlcv(String symbol) async {
     try {
-      final url = Uri.parse('$apiBase/$symbol?interval=1d&range=1y');
-      final response = await _client.get(url);
+      final url = Uri.parse(
+          'https://query1.finance.yahoo.com/v8/finance/chart/$symbol?interval=1d&range=200d');
+      final response = await _client.get(url).timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
         return null;
@@ -215,11 +216,11 @@ class YahooFinanceTickerRepository implements TickerRepository {
 
       final d = entry.data;
       return OhlcvData(
-        open: (d['open'] as List).cast<double>(),
-        high: (d['high'] as List).cast<double>(),
-        low: (d['low'] as List).cast<double>(),
-        close: (d['close'] as List).cast<double>(),
-        volume: (d['volume'] as List).cast<int>(),
+        open: (d['open'] as List).map((e) => (e as num).toDouble()).toList(),
+        high: (d['high'] as List).map((e) => (e as num).toDouble()).toList(),
+        low: (d['low'] as List).map((e) => (e as num).toDouble()).toList(),
+        close: (d['close'] as List).map((e) => (e as num).toDouble()).toList(),
+        volume: (d['volume'] as List).map((e) => (e as num).toInt()).toList(),
       );
     } catch (e) {
       print('Warning: Failed to parse cached OHLCV for $symbol. Error: $e');

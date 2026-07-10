@@ -881,9 +881,9 @@ BXtrenderResult calcBXtrender(
         ? 100 -
               100 / (1 + upDiff[i] / (downDiff[i] != 0 ? downDiff[i] : 0.001)) -
               50
-        : 0,
+        : 0.0,
   );
-  final maShort = t3(shortXR.cast<double>(), 5);
+  final maShort = t3(shortXR, 5);
 
   final isLong = List<bool>.filled(n, false);
   final isShort = List<bool>.filled(n, false);

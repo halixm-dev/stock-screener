@@ -72,12 +72,12 @@ class ScreenerService {
               results.add(result);
               await resultsBox.add(result);
             }
-          } catch (e) {
+          } catch (e, st) {
             // Silently drop and continue on fetch failure
             // Only print if not a Web CORS ClientException to avoid console flood
             final errorStr = e.toString();
             if (!errorStr.contains('XMLHttpRequest error')) {
-              print('Error fetching data for $symbol: $e');
+              print('Error fetching data for $symbol: $e\n$st');
             }
           } finally {
             completed++;
