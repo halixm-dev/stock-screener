@@ -5,6 +5,7 @@ import 'package:stock_screener/state/config_cubit.dart';
 import 'package:stock_screener/data/config_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stock_screener/ui/theme/app_theme.dart';
 
 void main() {
   testWidgets('IndicatorConfigScreen rendering test', (WidgetTester tester) async {
@@ -16,6 +17,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.light,
         home: BlocProvider.value(
           value: cubit,
           child: const IndicatorConfigScreen(),
