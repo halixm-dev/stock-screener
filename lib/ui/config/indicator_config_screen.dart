@@ -5,6 +5,7 @@ import '../../data/models/screen_signal_config.dart';
 import '../../domain/indicator_schema.dart';
 import '../../state/config_cubit.dart';
 import '../../state/config_state.dart';
+import '../theme/design_tokens.dart';
 
 /// Indicator configuration screen — leading/confirmation selection and
 /// per-indicator parameter tuning.
@@ -32,21 +33,30 @@ class IndicatorConfigScreen extends StatelessWidget {
   }
 
   Widget _buildRoutingSection(BuildContext context, ScreenSignalConfig config) {
-    return Card(
+    final tokens = Theme.of(context).extension<DesignTokens>()!;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: tokens.surface30,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: tokens.cardShadow,
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Signal Routing',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: tokens.textPrimary,
+              ),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Leading Indicator'),
-              initialValue:
-                  indicatorRegistry.keys.contains(config.leadingIndicator)
+              value: indicatorRegistry.keys.contains(config.leadingIndicator)
                   ? config.leadingIndicator
                   : 'Range Filter',
               items: indicatorRegistry.keys.map((key) {
@@ -103,9 +113,8 @@ class IndicatorConfigScreen extends StatelessWidget {
   }
 
   Widget _buildParametersSection(
-    BuildContext context,
-    ScreenSignalConfig config,
-  ) {
+      BuildContext context, ScreenSignalConfig config) {
+    final tokens = Theme.of(context).extension<DesignTokens>()!;
     final validLeading = indicatorRegistry.keys.contains(config.leadingIndicator)
         ? config.leadingIndicator
         : 'Range Filter';
@@ -117,7 +126,13 @@ class IndicatorConfigScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Parameters', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          'Parameters',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: tokens.textPrimary,
+          ),
+        ),
         const SizedBox(height: 16),
         ...activeIndicators.map((indicatorName) {
           final schema = indicatorRegistry[indicatorName];
@@ -125,10 +140,15 @@ class IndicatorConfigScreen extends StatelessWidget {
             return const SizedBox.shrink();
           }
 
-          return Card(
+          return Container(
             margin: const EdgeInsets.only(bottom: 16.0),
+            decoration: BoxDecoration(
+              color: tokens.surface30,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: tokens.cardShadow,
+            ),
             child: ExpansionTile(
-              title: Text(indicatorName),
+              title: Text(indicatorName, style: TextStyle(fontWeight: FontWeight.bold, color: tokens.textPrimary)),
               initiallyExpanded: true,
               children: schema.parameters.entries.map((entry) {
                 final paramKey = entry.key;

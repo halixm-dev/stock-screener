@@ -10,6 +10,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../data/models/screener_result.dart';
 import '../state/screener_cubit.dart';
 import '../state/config_cubit.dart';
+import 'theme/design_tokens.dart';
 
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({super.key});
@@ -86,16 +87,26 @@ class ResultsScreen extends StatelessWidget {
                       itemCount: results.length,
                       itemBuilder: (context, index) {
                         final result = results[index];
-                        return Card(
+                        final tokens = Theme.of(context).extension<DesignTokens>()!;
+                        
+                        return Container(
                           margin: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
                           ),
+                          decoration: BoxDecoration(
+                            color: tokens.surface30,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: tokens.cardShadow,
+                          ),
                           child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                             title: Text(
                               result.symbol,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: tokens.textPrimary,
                               ),
                             ),
                             subtitle: Text(
@@ -110,9 +121,9 @@ class ResultsScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                _buildSignalBadge(result.signal),
-                                const SizedBox(height: 4),
-                                _buildFreshnessBadge(result.freshResult),
+                                _buildSignalBadge(context, result.signal),
+                                const SizedBox(height: 8),
+                                _buildFreshnessBadge(context, result.freshResult),
                               ],
                             ),
                           ),
@@ -137,20 +148,20 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSignalBadge(SignalTypeHive signal) {
+  Widget _buildSignalBadge(BuildContext context, SignalTypeHive signal) {
     Color color;
     String text;
     switch (signal) {
       case SignalTypeHive.buy:
-        color = Colors.green;
+        color = const Color(0xFF10B981); // Emerald Green
         text = 'BUY';
         break;
       case SignalTypeHive.sell:
-        color = Colors.red;
+        color = const Color(0xFFEF4444); // Red
         text = 'SELL';
         break;
       case SignalTypeHive.neutral:
-        color = Colors.grey;
+        color = const Color(0xFF94A3B8); // Slate
         text = 'NEUTRAL';
         break;
     }
@@ -158,51 +169,53 @@ class ResultsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         text,
         style: TextStyle(
           color: color,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           fontSize: 12,
+          letterSpacing: 1.2,
         ),
       ),
     );
   }
 
-  Widget _buildFreshnessBadge(FreshCheckResultHive result) {
+  Widget _buildFreshnessBadge(BuildContext context, FreshCheckResultHive result) {
     Color color;
     String text;
     switch (result) {
       case FreshCheckResultHive.fresh:
-        color = Colors.blue;
+        color = const Color(0xFF3B82F6); // Blue
         text = 'FRESH';
         break;
       case FreshCheckResultHive.staleRepeat:
-        color = Colors.orange;
+        color = const Color(0xFFF59E0B); // Amber
         text = 'STALE';
         break;
       case FreshCheckResultHive.insufficientHistory:
-        color = Colors.grey;
+        color = const Color(0xFF64748B); // Slate
         text = 'NO HISTORY';
         break;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w600,
           fontSize: 10,
+          letterSpacing: 1.1,
         ),
       ),
     );

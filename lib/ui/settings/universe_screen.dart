@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../state/config_cubit.dart';
 import '../../state/config_state.dart';
+import '../theme/design_tokens.dart';
 
 /// Screen for choosing which stock universe the screener should scan.
 class UniverseScreen extends StatelessWidget {
@@ -19,19 +20,30 @@ class UniverseScreen extends StatelessWidget {
         builder: (context, state) {
           final config = state.config;
           final preset = config.universePreset;
+          final tokens = Theme.of(context).extension<DesignTokens>()!;
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // ── Preset Selector Card ──
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Universe Preset', style: textTheme.titleMedium),
-                      const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: tokens.surface30,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: tokens.cardShadow,
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Universe Preset', 
+                      style: textTheme.titleMedium?.copyWith(
+                        color: tokens.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: SegmentedButton<String>(
@@ -69,24 +81,26 @@ class UniverseScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Preset Info Card (LQ45 / IDX80) ──
               if (preset == 'lq45' || preset == 'idx80')
-                Card(
-                  color: colorScheme.secondaryContainer.withValues(alpha: 0.4),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: colorScheme.onSecondaryContainer,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
+                Container(
+                  decoration: BoxDecoration(
+                    color: tokens.accent10.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: tokens.accent10.withValues(alpha: 0.3)),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: tokens.accent10,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
                           child: Text(
                             preset == 'lq45'
                                 ? 'Top 45 most liquid IDX stocks. '
@@ -95,14 +109,13 @@ class UniverseScreen extends StatelessWidget {
                                     'liquidity. Universe is fetched '
                                     'automatically.',
                             style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSecondaryContainer,
+                              color: tokens.textPrimary,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
 
               // ── Custom Tickers Card ──
               if (preset == 'custom') ...[

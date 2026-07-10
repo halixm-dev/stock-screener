@@ -6,6 +6,7 @@ import 'package:workmanager/workmanager.dart';
 import '../../application/notification_service.dart';
 import '../../state/config_cubit.dart';
 import '../../state/config_state.dart';
+import '../theme/design_tokens.dart';
 
 class SchedulerScreen extends StatelessWidget {
   const SchedulerScreen({super.key});
@@ -16,16 +17,26 @@ class SchedulerScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Scan Schedule')),
       body: BlocBuilder<ConfigCubit, ConfigState>(
         builder: (context, state) {
+          final tokens = Theme.of(context).extension<DesignTokens>()!;
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // ── Enable / Disable Card ──
-              Card(
+              Container(
+                decoration: BoxDecoration(
+                  color: tokens.surface30,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: tokens.cardShadow,
+                ),
                 child: SwitchListTile(
-                  title: const Text('Enable Background Scans'),
-                  subtitle: const Text(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  title: Text('Enable Background Scans', style: TextStyle(fontWeight: FontWeight.bold, color: tokens.textPrimary)),
+                  subtitle: Text(
                     'Automatically scan during IDX market hours',
+                    style: TextStyle(color: tokens.textSecondary),
                   ),
+                  activeColor: tokens.accent10,
                   value: state.isBackgroundScanEnabled,
                   onChanged: (enabled) => _toggleBackgroundScan(
                     context,
@@ -35,19 +46,29 @@ class SchedulerScreen extends StatelessWidget {
                 ),
               ),
 
+              const SizedBox(height: 16),
+
               // ── Interval Card ──
               if (state.isBackgroundScanEnabled)
-                Card(
+                Container(
+                  decoration: BoxDecoration(
+                    color: tokens.surface30,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: tokens.cardShadow,
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Scan Interval',
-                          style: Theme.of(context).textTheme.titleMedium,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: tokens.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         DropdownButtonFormField<int>(
                           initialValue: state.config.scanIntervalMinutes,
                           decoration: const InputDecoration(
@@ -93,9 +114,13 @@ class SchedulerScreen extends StatelessWidget {
                 ),
 
               // ── Info Card ──
-              const SizedBox(height: 8),
-              Card(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: tokens.accent10.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: tokens.accent10.withValues(alpha: 0.3)),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(

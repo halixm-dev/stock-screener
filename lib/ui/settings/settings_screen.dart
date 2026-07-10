@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../state/config_cubit.dart';
 import '../../state/config_state.dart';
+import '../theme/design_tokens.dart';
 
 /// Settings hub that links to Indicator Config, Scan Schedule,
 /// and Stock Universe sub-screens.
@@ -17,39 +18,56 @@ class SettingsScreen extends StatelessWidget {
       body: BlocBuilder<ConfigCubit, ConfigState>(
         builder: (context, state) {
           final config = state.config;
+          final tokens = Theme.of(context).extension<DesignTokens>()!;
 
           return ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              // ── Indicator Config ──────────────────────────────
-              ListTile(
-                leading: const Icon(Icons.tune),
-                title: const Text('Indicator Config'),
-                subtitle: Text(
-                  'Leading: ${config.leadingIndicator} · '
-                  '${config.confirmations.length} confirmations',
+              Container(
+                decoration: BoxDecoration(
+                  color: tokens.surface30,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: tokens.cardShadow,
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/settings/indicators'),
-              ),
-              const Divider(),
+                child: Column(
+                  children: [
+                    // ── Indicator Config ──────────────────────────────
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      leading: Icon(Icons.tune, color: tokens.accent10),
+                      title: Text('Indicator Config', style: TextStyle(fontWeight: FontWeight.bold, color: tokens.textPrimary)),
+                      subtitle: Text(
+                        'Leading: ${config.leadingIndicator} · '
+                        '${config.confirmations.length} confirmations',
+                        style: TextStyle(color: tokens.textSecondary),
+                      ),
+                      trailing: Icon(Icons.chevron_right, color: tokens.textSecondary),
+                      onTap: () => context.push('/settings/indicators'),
+                    ),
+                    Divider(height: 1, indent: 20, endIndent: 20, color: tokens.textSecondary.withValues(alpha: 0.2)),
 
-              // ── Scan Schedule ─────────────────────────────────
-              ListTile(
-                leading: const Icon(Icons.schedule),
-                title: const Text('Scan Schedule'),
-                subtitle: Text(_scanScheduleSubtitle(state)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/settings/schedule'),
-              ),
-              const Divider(),
+                    // ── Scan Schedule ─────────────────────────────────
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      leading: Icon(Icons.schedule, color: tokens.accent10),
+                      title: Text('Scan Schedule', style: TextStyle(fontWeight: FontWeight.bold, color: tokens.textPrimary)),
+                      subtitle: Text(_scanScheduleSubtitle(state), style: TextStyle(color: tokens.textSecondary)),
+                      trailing: Icon(Icons.chevron_right, color: tokens.textSecondary),
+                      onTap: () => context.push('/settings/schedule'),
+                    ),
+                    Divider(height: 1, indent: 20, endIndent: 20, color: tokens.textSecondary.withValues(alpha: 0.2)),
 
-              // ── Stock Universe ────────────────────────────────
-              ListTile(
-                leading: const Icon(Icons.public),
-                title: const Text('Stock Universe'),
-                subtitle: Text(_universeSubtitle(state)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/settings/universe'),
+                    // ── Stock Universe ────────────────────────────────
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      leading: Icon(Icons.public, color: tokens.accent10),
+                      title: Text('Stock Universe', style: TextStyle(fontWeight: FontWeight.bold, color: tokens.textPrimary)),
+                      subtitle: Text(_universeSubtitle(state), style: TextStyle(color: tokens.textSecondary)),
+                      trailing: Icon(Icons.chevron_right, color: tokens.textSecondary),
+                      onTap: () => context.push('/settings/universe'),
+                    ),
+                  ],
+                ),
               ),
             ],
           );
