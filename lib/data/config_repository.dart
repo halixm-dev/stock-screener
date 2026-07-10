@@ -34,4 +34,12 @@ class ConfigRepository {
   Future<void> setBackgroundScanEnabled(bool enabled) async {
     await _prefs.setBool('isBackgroundScanEnabled', enabled);
   }
+
+  int getScanIntervalMinutes() {
+    return _prefs.getInt('scanIntervalMinutes') ?? 60;
+  }
+
+  Future<void> setScanIntervalMinutes(int minutes) async {
+    await _prefs.setInt('scanIntervalMinutes', minutes);
+  }
 }

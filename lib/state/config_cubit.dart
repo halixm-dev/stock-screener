@@ -12,7 +12,11 @@ class ConfigCubit extends Cubit<ConfigState> {
   Future<void> loadConfig() async {
     final config = await _repository.getConfig();
     final isBackgroundEnabled = _repository.isBackgroundScanEnabled();
-    emit(ConfigState(config, isBackgroundEnabled));
+    final interval = _repository.getScanIntervalMinutes();
+    emit(ConfigState(
+      config.copyWith(scanIntervalMinutes: interval),
+      isBackgroundEnabled,
+    ));
   }
 
   Future<void> updateConfig(ScreenSignalConfig newConfig) async {
@@ -23,5 +27,12 @@ class ConfigCubit extends Cubit<ConfigState> {
   Future<void> setBackgroundScanEnabled(bool enabled) async {
     await _repository.setBackgroundScanEnabled(enabled);
     emit(ConfigState(state.config, enabled));
+  }
+
+  Future<void> setScanInterval(int minutes) async {
+    await _repository.setScanIntervalMinutes(minutes);
+    final updated = state.config.copyWith(scanIntervalMinutes: minutes);
+    await _repository.saveConfig(updated);
+    emit(ConfigState(updated, state.isBackgroundScanEnabled));
   }
 }
