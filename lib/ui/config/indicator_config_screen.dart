@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,11 +5,11 @@ import '../../data/models/screen_signal_config.dart';
 import '../../domain/indicator_schema.dart';
 import '../../state/config_cubit.dart';
 import '../../state/config_state.dart';
-import '../../application/notification_service.dart';
-import 'package:workmanager/workmanager.dart';
 
-class ConfigScreen extends StatelessWidget {
-  const ConfigScreen({super.key});
+/// Indicator configuration screen — leading/confirmation selection and
+/// per-indicator parameter tuning.
+class IndicatorConfigScreen extends StatelessWidget {
+  const IndicatorConfigScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,113 +21,12 @@ class ConfigScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              _buildGeneralSettingsSection(context, state),
-              const SizedBox(height: 24),
-              _buildUniverseSection(context, config),
-              const SizedBox(height: 24),
               _buildRoutingSection(context, config),
               const SizedBox(height: 24),
               _buildParametersSection(context, config),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildGeneralSettingsSection(BuildContext context, ConfigState state) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'General Settings',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Enable Background Scans'),
-              subtitle: const Text(
-                'Run scans every hour and notify of fresh signals',
-              ),
-              value: state.isBackgroundScanEnabled,
-              onChanged: (val) async {
-                if (kIsWeb && val) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Background scans are not supported on the web.',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                context.read<ConfigCubit>().setBackgroundScanEnabled(val);
-                if (val) {
-                  // Request permissions
-                  final notif = NotificationService();
-                  await notif.initialize();
-                  await notif.requestPermissions();
-
-                  // Register task
-                  if (!kIsWeb) {
-                    Workmanager().registerPeriodicTask(
-                      "1",
-                      "backgroundScreenerTask",
-                      frequency: const Duration(hours: 1),
-                    );
-                  }
-                } else {
-                  if (!kIsWeb) {
-                    Workmanager().cancelAll();
-                  }
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUniverseSection(
-    BuildContext context,
-    ScreenSignalConfig config,
-  ) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Stock Universe',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: config.universe.join(', '),
-              decoration: const InputDecoration(
-                labelText: 'Tickers (comma separated)',
-                hintText: 'Leave empty to scan all IDX stocks',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              onChanged: (val) {
-                final symbols = val
-                    .split(',')
-                    .map((s) => s.trim().toUpperCase())
-                    .where((s) => s.isNotEmpty)
-                    .toList();
-                context.read<ConfigCubit>().updateConfig(
-                  config.copyWith(universe: symbols),
-                );
-              },
-            ),
-          ],
-        ),
       ),
     );
   }

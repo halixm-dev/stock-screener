@@ -14,7 +14,7 @@ import 'data/config_repository.dart';
 import 'domain/ticker_filter.dart';
 import 'state/screener_cubit.dart';
 import 'state/config_cubit.dart';
-import 'ui/results_screen.dart';
+import 'ui/router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,32 +51,33 @@ void main() async {
   );
 
   runApp(
-    MyApp(screenerService: screenerService, configRepository: configRepository),
+    MyApp(
+      screenerService: screenerService,
+      configRepository: configRepository,
+      tickerRepository: tickerRepository,
+    ),
   );
 }
 
 class MyApp extends StatelessWidget {
   final ScreenerService screenerService;
   final ConfigRepository configRepository;
+  final TickerRepository tickerRepository;
 
   const MyApp({
     super.key,
     required this.screenerService,
     required this.configRepository,
+    required this.tickerRepository,
   });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Stock Screener',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      home: MultiBlocProvider(
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<TickerRepository>.value(value: tickerRepository),
+      ],
+      child: MultiBlocProvider(
         providers: [
           BlocProvider(
             create: (context) =>
@@ -86,7 +87,17 @@ class MyApp extends StatelessWidget {
             create: (context) => ConfigCubit(configRepository)..loadConfig(),
           ),
         ],
-        child: const ResultsScreen(),
+        child: MaterialApp.router(
+          title: 'Stock Screener',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          routerConfig: router,
+        ),
       ),
     );
   }
