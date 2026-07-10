@@ -120,9 +120,10 @@ class ResultsScreen extends StatelessWidget {
                             trailing: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 _buildSignalBadge(context, result.signal),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 2),
                                 _buildFreshnessBadge(context, result.freshResult),
                               ],
                             ),
@@ -167,7 +168,7 @@ class ResultsScreen extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
@@ -204,7 +205,7 @@ class ResultsScreen extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(6),
@@ -237,8 +238,8 @@ class _ConnectivityBannerState extends State<_ConnectivityBanner> {
   @override
   void initState() {
     super.initState();
-    // Skip connectivity checks on web
-    if (!kIsWeb) {
+    // Skip connectivity checks on web and in test environment
+    if (!kIsWeb && !Platform.environment.containsKey('FLUTTER_TEST')) {
       _checkConnectivity();
       _timer = Timer.periodic(
         const Duration(seconds: 30),
