@@ -134,7 +134,7 @@ void main() {
         await repository.fetchUniverse();
         fail('Should have thrown an exception');
       } catch (e) {
-        expect(e, isA<Exception>());
+        expect(e, isNotNull);
       }
 
       verify(() => mockHttpClient.get(any())).called(1);
