@@ -15,6 +15,7 @@ import 'domain/ticker_filter.dart';
 import 'state/screener_cubit.dart';
 import 'state/config_cubit.dart';
 import 'ui/router.dart';
+import 'ui/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,13 +90,9 @@ class MyApp extends StatelessWidget {
         ],
         child: MaterialApp.router(
           title: 'Stock Screener',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-          ),
+          themeMode: ThemeMode.system,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
           routerConfig: router,
         ),
       ),
